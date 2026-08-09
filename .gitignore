@@ -20,10 +20,5 @@ pnpm-debug.log*
 .DS_Store
 Thumbs.db
 
-<<<<<<< HEAD
 ./server/tutorial_images/
 ./server/uploads/
-=======
-./server/uploads
-./server/tutorial_images
->>>>>>> 329a623 (Initial commit)
