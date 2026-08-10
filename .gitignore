@@ -20,5 +20,5 @@ pnpm-debug.log*
 .DS_Store
 Thumbs.db
 
-./server/tutorial_images/
-./server/uploads/
+/server/tutorial_images/
+/server/uploads/

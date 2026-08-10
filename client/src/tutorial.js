@@ -35,32 +35,26 @@ const IMAGE_NAMES = [
   "upload_form.png",
   "KiriEngine.png",
 ];
-let currentPage = 0;
 
-for (let i = 0; i < IMAGE_NAMES.length; i++) {
-  var img = document.createElement("img");
-  img.src = BASE_URL + "/tutorial_images/" + IMAGE_NAMES[i];
-  img.alt = "Image Missing";
-  img.className = "image";
-  img.loading = "eager";
+var currentPage = 0;
 
-  tutorialImages.push(img);
-}
+function setupWindow() {
+  for (let i = 0; i < IMAGE_NAMES.length; i++) {
+    let img = document.createElement("img");
+    img.src = BASE_URL + "/tutorial_images/" + IMAGE_NAMES[i];
+    img.alt = "Image Missing";
+    img.loading = "eager";
 
-document.getElementById("previous").addEventListener(
-  "click",
-  (event) => {
+    tutorialImages.push(img);
+  }
+
+  document.getElementById("previous").onclick = () => {
     previousPage();
-  },
-  false,
-);
-document.getElementById("next").addEventListener(
-  "click",
-  (event) => {
+  };
+  document.getElementById("next").onclick = () => {
     nextPage();
-  },
-  false,
-);
+  };
+}
 
 function previousPage() {
   if (currentPage > 0) {
@@ -77,12 +71,13 @@ function nextPage() {
 }
 
 function updatePage() {
-  document.getElementById("title").textContent = TUTORIAL_TITLES[currentPage];
-  let description = document.getElementById("description");
+  document.getElementById("tutorial__title").textContent =
+    TUTORIAL_TITLES[currentPage];
+  let description = document.getElementById("tutorial__description");
   description.innerHTML = TUTORIAL_DESCRIPTIONS[currentPage];
   description.parentNode.scrollTop = 0;
 
-  let imageContainer = document.getElementById("image-frame");
+  let imageContainer = document.getElementById("tutorial__image-frame");
   imageContainer.innerHTML = "";
   imageContainer.appendChild(tutorialImages[currentPage]);
 
@@ -99,4 +94,5 @@ function updatePage() {
   }
 }
 
+setupWindow();
 updatePage();

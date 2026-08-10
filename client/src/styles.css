@@ -1,8 +1,3 @@
-/*TODO
-change px to rem
-use grid
-use modifiers
-use elements in blocks*/
 *,
 *::before,
 *::after {
@@ -26,7 +21,6 @@ body {
   width: 100%;
   height: 100%;
 }
-
 #left-menu {
   position: absolute;
   left: 0;
@@ -80,7 +74,6 @@ body {
   right: 3rem;
   top: 3rem;
 }
-
 #right-menu {
   position: absolute;
   right: 0;
@@ -110,14 +103,6 @@ body {
   row-gap: 1rem;
   overflow: hidden;
 }
-/*#right-menu__top__content {
-  border-radius: 10px;
-  width: 100%;
-  height: 100%;
-  overflow-y: scroll;
-  scrollbar-width: none;
-  background-color: rgba(57, 29, 8, 0);
-}*/
 #right-menu__top__content {
   display: flex;
   flex-direction: column;
@@ -171,8 +156,6 @@ body {
   max-width: 100%;
   max-height: 100%;
   border-radius: 0.5rem;
-  /*object-fit: contain;
-  display: block;*/
 }
 .model-select-card {
   display: grid;
@@ -212,7 +195,6 @@ body {
   overflow-wrap: break-word;
   hyphens: auto;
 }
-
 #full-image-container {
   z-index: 13;
   position: absolute;
@@ -348,7 +330,6 @@ body {
   height: fit-content;
   font-size: 1.4rem;
 }
-/* HTML: <div class="loader"></div> */
 .loading-anim {
   width: 5rem;
   aspect-ratio: 1;
@@ -373,7 +354,6 @@ body {
   justify-content: center;
   align-items: center;
 }
-
 .title-font {
   color: #ffffff;
   font-family: "Josefin Sans", sans-serif;
@@ -407,7 +387,6 @@ body {
 .green {
   color: #04ff00;
 }
-
 #costume-form {
   z-index: 12;
   position: fixed;
@@ -547,7 +526,6 @@ body {
   align-items: center;
   background-color: rgba(243, 8, 8, 0);
 }
-
 #about-container {
   z-index: 13;
   position: absolute;
@@ -576,11 +554,9 @@ body {
     min-width: 0px;
   }
 }
-
 #about-container > .close-button {
   justify-self: right;
 }
-
 a:link {
   text-decoration: none;
   color: rgb(139, 255, 31);
@@ -592,4 +568,133 @@ a:visited {
 a:hover {
   color: rgb(55, 255, 0);
   text-decoration: none;
+}
+/*tutorial*/
+.screen--tutorial {
+  justify-content: center;
+  background-color: rgb(57, 111, 47);
+  padding: 2rem;
+}
+@media (max-width: 768px) {
+  .screen--tutorial {
+    padding: 0px;
+  }
+}
+#tutorial-window {
+  position: relative;
+  padding: 2rem;
+  height: 80%;
+  max-width: 70rem;
+  background-color: rgb(37, 72, 31);
+  border-radius: 1rem;
+  display: flex;
+  flex-direction: column;
+  row-gap: 1.5rem;
+}
+@media (max-width: 768px) {
+  #tutorial-window {
+    width: 100%;
+    height: 100%;
+    border-radius: 0px;
+  }
+}
+#tutorial-content {
+  height: 90%;
+  display: grid;
+  grid-template-columns: 2fr 5fr;
+  column-gap: 2rem;
+}
+@media (max-width: 768px) {
+  #tutorial-content {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 1fr;
+    row-gap: 1rem;
+    padding-top: 1.5rem;
+  }
+}
+.tutorial__text {
+  overflow: hidden;
+  position: relative;
+}
+.text-container {
+  width: 100%;
+  height: 100%;
+  overflow-y: scroll;
+  scrollbar-width: none;
+  display: flex;
+  flex-direction: column;
+  row-gap: 2rem;
+}
+#tutorial__title {
+  height: fit-content;
+  font-size: 2rem;
+}
+@media (max-width: 768px) {
+  #tutorial__title {
+    padding-top: 0px;
+  }
+}
+#tutorial__description {
+  height: fit-content;
+}
+.gradient {
+  position: absolute;
+  bottom: 0px;
+  height: 10%;
+  width: 100%;
+  background: linear-gradient(
+    180deg,
+    rgba(37, 72, 31, 0) 0%,
+    rgba(37, 72, 31, 0.7) 50%,
+    rgba(37, 72, 31, 1) 100%
+  );
+  pointer-events: none;
+}
+#tutorial__image-frame {
+  border-radius: 1rem;
+  overflow: hidden;
+}
+#tutorial__image-frame > img {
+  height: 100%;
+  position: relative;
+  left: 50%;
+  transform: translate(-50%, 0%);
+  object-fit: cover;
+  border-radius: 1rem;
+}
+.tutorial__buttons-container {
+  width: 100%;
+  height: 4rem;
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  row-gap: 1rem;
+}
+.tutorial__button {
+  width: 6rem;
+  height: 3rem;
+  border-radius: 0.5rem;
+  margin: auto;
+  border: none;
+  background-color: rgba(0, 0, 0, 0.3);
+}
+@media (max-width: 768px) {
+  .tutorial__button {
+    width: 5rem;
+    height: 2.5rem;
+    font-size: 1.2rem;
+  }
+}
+#tutorial-exit {
+  position: fixed;
+  right: 2rem;
+  top: 2rem;
+  background-color: rgb(37, 72, 31);
+  color: red;
+}
+@media (max-width: 768px) {
+  #tutorial-exit {
+    right: 0.5rem;
+    top: 0.5rem;
+  }
 }
