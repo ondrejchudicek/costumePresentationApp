@@ -116,31 +116,5 @@
         "path": "/images/9a491578-26be-44de-9702-6e7ca68de23e-IMG_5681.jpg"
       }
     ]
-  },
-  {
-    "costumeID": "becd9951-ba73-4cbf-9935-8b83cfcb022d",
-    "name": "a",
-    "description": "a",
-    "parts": [
-      {
-        "partID": "part_becd9951-ba73-4cbf-9935-8b83cfcb022d_0",
-        "name": "a",
-        "path": "/models/66637a77-9fbb-4b17-8fd0-9794e411099a-klobuk.glb"
-      }
-    ],
-    "images": []
-  },
-  {
-    "costumeID": "081c493b-ea9f-43f0-8d19-9608517e803d",
-    "name": "b",
-    "description": "b",
-    "parts": [
-      {
-        "partID": "part_081c493b-ea9f-43f0-8d19-9608517e803d_0",
-        "name": "b",
-        "path": "/models/06009e54-03a4-4a2f-9d30-f9385611167b-kordula3.glb"
-      }
-    ],
-    "images": []
   }
 ]
