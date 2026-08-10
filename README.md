@@ -1,3 +1,6 @@
+A web application for viewing and uploading 3D scans of folk costumes.
+See client-side demo at https://ondrejchudicek.github.io/costumePresentationAppDemo/
+
 # Installation
 
 Install Node.js:
