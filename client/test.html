@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="cz">
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <style>
+    .grid {
+      width: 10rem;
+      height: 10rem;
+      display: grid;
+      grid-template-columns: [col1] 1fr [col2] 2fr [col3] 1fr [col4];
+      grid-template-rows: [row1] 1fr [row2] 1fr [row3];
+      grid-template-areas:
+        "header header a"
+        "footer footer a";
+    }
+    .cont {
+      border-width: 1px;
+      border-style: solid;
+      border-color: blueviolet;
+      display: flex;
+      justify-content: space-evenly;
+      align-items: center;
+      /*gap: 1rem;*/
+    }
+    .frame {
+      border-width: 1px;
+      border-style: solid;
+    }
+    .grid .frame {
+      border-color: blueviolet;
+    }
+    .cont .frame {
+      border-color: rgb(80, 226, 43);
+      width: 4rem;
+      height: 4rem;
+    }
+  </style>
+  <body>
+    <div class="grid">
+      <div class="frame" style="grid-column-start: span 2">aaa</div>
+      <div class="frame" style="grid-area: a">bbb</div>
+      <div class="frame">ccc</div>
+      <div class="frame">ddd</div>
+    </div>
+    <div class="cont" style="width: 20rem; height: 5rem">
+      <div class="frame"></div>
+      <div class="frame"></div>
+    </div>
+  </body>
+</html>

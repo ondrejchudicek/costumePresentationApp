@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Vite build output
+dist/
+
+# Local environment variables
+.env
+.env.*
+!.env.example
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Editor / OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+./server/tutorial_images/
+./server/uploads/

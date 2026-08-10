@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="cz">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, height=device-height, initial-scale=1.0"
+    />
+    <title>Databáze Krojů</title>
+    <meta
+      name="description"
+      content="Platforma pro prohlížení a sdílení 3D modelů krojů, pořízených pomocí fotogrametrie."
+    />
+
+    <link rel="stylesheet" href="./src/styles.css" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&display=swap"
+      rel="stylesheet"
+    />
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Josefin+Sans:ital,wght@0,100..700;1,100..700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div id="screen">
+      <canvas id="model-canvas"></canvas>
+
+      <div id="left-menu__button" class="left-button left-button--bottom">
+        <div id="left-menu__button__text" class="main-font horizontal-text">
+          Popis
+        </div>
+      </div>
+      <div id="right-menu__button" class="right-button right-button--bottom">
+        <div id="right-menu__button__text" class="main-font horizontal-text">
+          Menu
+        </div>
+      </div>
+
+      <div id="left-menu">
+        <div class="left-menu__title title-font"></div>
+        <div id="left-menu__description-container">
+          <div id="left-menu__description" class="main-font"></div>
+        </div>
+      </div>
+
+      <div id="right-menu">
+        <div id="right-menu__top">
+          <div class="right-menu__top__buttons-container">
+            <button id="images-button" class="main-font small-font green">
+              Obrázky
+            </button>
+            <button id="parts-button" class="main-font small-font">
+              Součásti
+            </button>
+            <button id="costumes-button" class="main-font small-font">
+              Kroje
+            </button>
+          </div>
+          <div id="right-menu__top__content"></div>
+        </div>
+        <div class="right-menu__bot">
+          <button id="reset-camera" class="main-font small-font">
+            Resetovat Pohled
+          </button>
+          <button id="contribute" type="button" class="main-font small-font">
+            Nahrát Kroj
+          </button>
+          <button id="show-about" class="main-font small-font">
+            O aplikaci
+          </button>
+        </div>
+      </div>
+
+      <form
+        name="costumeUploadForm"
+        id="costume-form"
+        autocomplete="off"
+        method="POST"
+        enctype="multipart/form-data"
+      >
+        <div id="form__title" class="title-font">Nový Kroj</div>
+        <div id="form__rows">
+          <input
+            type="text"
+            id="name"
+            class="input-text-field main-font"
+            name="name"
+            placeholder="Název kroje"
+            autocomplete="off"
+            required
+          />
+          <input
+            type="text"
+            id="description"
+            class="input-text-field main-font"
+            name="description"
+            placeholder="Popis kroje"
+            autocomplete="off"
+            required
+          />
+
+          <div id="form__add-buttons">
+            <input
+              type="file"
+              id="parts"
+              class="hidden-file-input"
+              name="partFiles"
+              multiple
+              accept=".glb"
+              required
+            />
+            <button
+              onclick="document.getElementById('parts').click()"
+              type="button"
+              class="form__add-button main-font small-font"
+            >
+              Nahrát modely
+            </button>
+            <input
+              type="file"
+              id="images"
+              class="hidden-file-input"
+              name="images"
+              multiple
+              accept=".jpg, .png, .jpeg"
+              style="display: none"
+            />
+            <button
+              onclick="document.getElementById('images').click()"
+              type="button"
+              class="form__add-button main-font small-font"
+            >
+              Nahrát obrázky
+            </button>
+          </div>
+        </div>
+        <div class="form__buttons">
+          <button
+            id="reset-form"
+            type="button"
+            class="reset-button main-font small-font red"
+          >
+            Zrušit
+          </button>
+          <a href="/tutorial.html">
+            <button class="tutorial-button main-font small-font">Návod</button>
+          </a>
+          <button
+            id="preview"
+            type="button"
+            class="preview-button main-font small-font"
+          >
+            Náhled
+          </button>
+          <button
+            type="submit"
+            id="submit"
+            class="submit-button main-font small-font green"
+          >
+            Nahrát
+          </button>
+        </div>
+      </form>
+
+      <div id="about-container">
+        <div class="fullImageName main-font large-font">O aplikaci</div>
+        <div
+          class="main-font"
+          style="grid-row-start: 2; grid-column-start: span 2"
+        >
+          Cílem aplikace bylo vytvořit veřejný prostor pro dokumentaci
+          a&nbsp;prezentaci krojů a&nbsp;přitom zjednodušit proces skenování
+          a&nbsp;sdílení modelů.<br />
+          <br />
+          Hlavní částí je prohlížeč kroje, který může návštěvník otáčet (levé
+          tlačítko), přibližovat (kolečko) a&nbsp;posouvat (pravé tlačítko).
+          V&nbsp;levé části se nachází popis kroje a&nbsp;na pravo menu se
+          sekcemi Obrázky, Součásti a&nbsp;Kroje. V&nbsp;sekci Součásti může
+          uživatel libovolně vypínat jednotlivé části oblečení pro prohlížení
+          všech vrstev a&nbsp;sekce Kroje slouží pro výběr modelu.<br />
+          Dále je v&nbsp;menu možné nahrát nový kroj. Ten musí mít název, popis
+          a&nbsp;alespoň jeden model ve formátu GLB. Rovněž je možné nahrát
+          fotografie kroje, z nichž první bude použita v&nbsp;menu výběru krojů.
+          <a href="/tutorial.html">Kompletní průvodce procesem</a> je přístupný
+          z panelu nahrávání kroje.<br />
+          <br />
+          Aplikace byla vytvořena v&nbsp;rámci magisterské práce "Interactive
+          Web Platform for Presenting 3D Models of Folk Costumes" na FI MUNI.
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>
