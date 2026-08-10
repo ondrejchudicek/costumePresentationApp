@@ -11,15 +11,15 @@ const COSTUMES = await (await fetch(BASE_URL + "/api/models")).json();
 const IS_TOUCH = window.matchMedia("(pointer: coarse)").matches;
 const MAX_LOADED = IS_TOUCH ? 1 : 3;
 const canvas = document.getElementById("model-canvas");
-const WIDTH = canvas.clientWidth;
-const HEIGHT = canvas.clientHeight;
 const RENDERER = new THREE.WebGLRenderer({
   antialias: true,
   canvas,
   alpha: false,
 });
+var width = canvas.clientWidth;
+var height = canvas.clientHeight;
 const SCREEN = document.getElementById("screen");
-const CAMERA = new THREE.PerspectiveCamera(65, WIDTH / HEIGHT, 0.01, 100);
+const CAMERA = new THREE.PerspectiveCamera(65, width / height, 0.01, 100);
 const SCENE = new THREE.Scene();
 const CONTROLS = new OrbitControls(CAMERA, RENDERER.domElement);
 const GLTF_LOADER = new GLTFLoader();
@@ -76,17 +76,20 @@ function animate(t = 0) {
 }
 
 function setupRenderer() {
-  RENDERER.setSize(WIDTH, HEIGHT, false);
+  RENDERER.setSize(width, height, false);
   RENDERER.outputColorSpace = THREE.SRGBColorSpace;
 
   SCREEN.appendChild(RENDERER.domElement);
   document.body.appendChild(SCREEN);
 
   window.addEventListener("resize", () => {
-    CAMERA.aspect = WIDTH / HEIGHT;
+    width = canvas.clientWidth;
+    height = canvas.clientHeight;
+
+    CAMERA.aspect = width / height;
     CAMERA.updateProjectionMatrix();
 
-    RENDERER.setSize(WIDTH, HEIGHT, false);
+    RENDERER.setSize(width, height, false);
   });
 }
 

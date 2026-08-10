@@ -1,896 +1,202 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="cz">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, height=device-height, initial-scale=1.0"
+    />
     <title>Databáze Krojů</title>
-    <meta name="description" content="Platforma pro prohlížení a sdílení 3D modelů krojů, pořízených pomocí fotogrametrie.">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&display=swap" rel="stylesheet">
-
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet">
-
-    <!--"DM Sans", sans-serif;-->
-
-    <style>
-      *,
-      *::before,
-      *::after {
-        box-sizing: border-box;
-      }
-      body {
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-      }
-      #screen {
-        height: 100dvh;
-        width: 100wv;
-        display: flex;
-        align-items: center;
-      }
-      #model-canvas {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-      }
-
-      #leftMenu {
-        position: absolute;
-        left: 0;
-        top: 0;
-        padding: 20px;
-        z-index: 10;
-        height:100%;
-        width: 30%;
-        max-width: 360px;
-        display: grid;
-        grid-template-rows: 1fr 4fr;
-        grid-gap: 20px 20px;
-        background-color:rgba(0, 255, 60, 0);
-        opacity: 1;
-      }
-      .costumeName{
-        width: 100%;
-        height: 100%;
-        border-radius: 15px;
-        padding: 20px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        background-color: rgba(0, 0, 0, 0.7);
-        backdrop-filter: blur(5px);
-      }
-      #costumeNameFrame{
-        width: fit-content;
-        height: fit-content;
-        text-align: center;
-      }
-      #leftMenuAppear{
-        height: 100%;
-        width: 100%;
-        padding: 20px;
-        border-radius: 15px;
-        background-color:rgba(0, 0, 0, 0.7);
-        opacity: 0;
-        -webkit-transition: opacity 0.3s;
-        transition: opacity 0.3s;
-        backdrop-filter: blur(5px);
-        overflow: hidden;
-      }
-      #costumeDescriptionContainer{
-        width: 100%;
-        height: 100%;
-        position: relative;
-        overflow: scroll;
-        scrollbar-width: none;
-        background-color: rgba(255, 0, 217, 0);
-      }
-      #costumeDescription{
-        width: 100%;
-        height: fit-content;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        background-color: rgba(255, 0, 217, 0);
-      }
-
-      #rightMenu{
-        position: absolute;
-        right: 0;
-        top: 0;
-        padding: 20px;
-        z-index: 10;
-        height: 100%;
-        width: 30%;
-        max-width: 360px;
-        background-color:rgba(255, 0, 132, 0);
-        opacity: 0;
-        -webkit-transition: opacity 0.3s;
-        transition: opacity 0.3s;
-      }
-      #rightMenuPicker{
-        width: 100%;
-        height: 88%;
-        padding: 20px;
-        border-radius: 15px;
-        background-color: rgba(0, 0, 0, 0.7);
-        backdrop-filter: blur(5px);
-        display: grid;
-        grid-template-rows: 1fr 15fr;
-        grid-template-columns: 100%;
-        grid-gap: 10px 10px;
-        overflow: hidden;
-      }
-      #rightMenuPickerList{
-        border-radius: 10px;
-        width: 100%;
-        height: 100%;
-        overflow-y: scroll;
-        scrollbar-width: none;
-        background-color:rgba(57, 29, 8, 0);
-      }
-      .rightMenuBotButtonsContainer{
-        display: grid;
-        width: 100%;
-        height: 12%;
-        padding-top: 20px;
-        grid-template-columns: 1fr 1fr 1fr;
-        grid-gap: 20px 20px;
-        background-color: rgba(6, 212, 37, 0);
-      }
-      .rightMenuBotButton{
-        width: 100%;
-        height: 100%;
-        border-radius: 15px;
-        border: none;
-        background-color:rgba(0, 0, 0, 0.7);
-        backdrop-filter: blur(5px);
-      }
-      .rightMenuTopButtonsContainer{
-        display: grid;
-        width: 100%;
-        height: fit-content;
-        padding-top: 10px;
-        grid-template-columns: 1fr 1fr 1fr;
-        grid-gap: 0px 0px;
-        background-color: rgba(6, 212, 37, 0);
-      }
-      .rightMenuTopButton{
-        position: relative;
-        left: 50%;
-        width: fit-content;
-        height: 100%;
-        transform: translate(-50%, 0%);
-        background-color:rgba(38, 0, 255, 0);
-        border: none;
-      }
-      .rightMenuTopButtonSelected{
-        position: relative;
-        left: 50%;
-        width: fit-content;
-        height: 100%;
-        transform: translate(-50%, 0%);
-        background-color:rgba(38, 0, 255, 0);
-        border: none;
-      }
-      .partToggleButtonFrame{
-        width: 100%;
-        height: 10%;
-        padding-top: 10px;
-        padding-bottom: 10px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        background-color: rgba(239, 252, 55, 0);
-      }
-      @media (max-width: 768px) {
-        .partToggleButtonFrame{
-          height: 15%;
-        }
-      }
-      .partToggleButton{
-        height: 100%;
-        width: 80%;
-        background-color: rgba(0, 0, 0, 0.5);
-        border-radius: 10px;
-        border: none;
-      }
-      .imageFrame{
-        z-index: 10;
-        padding-top: 10px;
-        padding-bottom: 10px;
-        background-color: rgba(0, 0, 0, 0);
-      }
-      .imageFrame img {
-        max-width: 100%;
-        max-height: 100%;
-
-        object-fit: contain;
-        display: block;
-      }
-      .modelSelectCardContainer{
-        width: 100%;
-        height: 170px;
-        padding-top: 10px;
-        padding-bottom: 10px;
-      }
-      @media (max-width: 768px) {
-        .modelSelectCardContainer {
-          height: 170px;
-        }
-      }      
-      .modelSelectCard{
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        grid-gap: 10px 10px;
-        height: 100%;
-        width: 100%;
-        min-height: 0;
-        padding: 10px;
-        border: none;
-        border-radius: 10px;
-        background-color: rgb(0, 0, 0, 0.5);
-      }
-      .modelSelectCard img{
-        max-width: 100%;
-        height: 130px;
-
-        object-fit: cover;
-        display: block;
-      }
-      @media (max-width: 768px) {
-        .modelSelectCard img {
-          height: 130px;
-        }
-      } 
-      .modelSelectCardButtonFrame{
-        width: 100%;
-        height: 100%;
-        padding-top: 10px;
-        padding-bottom: 10px;
-        background-color: rgba(207, 220, 19, 0);
-      }
-      .modelSelectCardButton{
-        height: 100%;
-        width: 100%;
-        background-color: rgba(0, 0, 0, 0);
-        border: none;
-      }
-      .modelSelectButtonFrame{
-        width: 100%;
-        height: 10%;
-        padding-top: 10px;
-        padding-bottom: 10px;
-        background-color: rgba(239, 252, 55, 0);
-      }
-      @media (max-width: 768px) {
-        .modelSelectButtonFrame {
-          height: 15%;
-        }
-      }
-      .modelSelectButton{
-        height: 100%;
-        width: 100%;
-        background-color: rgb(0, 0, 0, 0.3);
-        border-radius: 10px;
-        border: none;
-      }
-
-      #fullImageContainer{
-        z-index: 13;
-        position: absolute;
-        left: 50%;
-        bottom: 50%;
-        width: fit-content;
-        padding-left: 20px;
-        padding-right: 20px;
-        padding-top: 0px;
-        padding-bottom: 10px;
-        height: fit-content;
-        background-color: rgba(0, 0, 0, 0.7);
-        border-radius: 15px;
-        border: none;
-        transform: translate(-50%, 50%);
-        backdrop-filter: blur(5px);
-      }
-      @media (max-width: 768px) {
-        #fullImageContainer{
-          width: 100%;
-          height: 100%;
-          border-radius: 0px;
-        }
-      }
-      .fullImageFrame{
-        z-index: 10;
-        padding-top: 10px;
-        padding-bottom: 10px;
-        background-color: rgba(0, 0, 0, 0);
-      }
-      .fullImageFrame img {
-        max-width: 90vw;
-        max-height: 85vh;
-
-        object-fit: contain;
-        display: block;
-      }
-      @media (max-width: 768px) {
-        .fullImageFrame img {
-          max-width: 90vw;
-        }
-      }
-      .fullImageName{
-        height: fit-content;
-        width: 100%;
-        border-radius: 10px;
-        padding-top: 40px;
-        padding-bottom: 20px;
-      }
-      .closeButton{
-        float: right;
-        height: fit-content;
-        width: fit-content;
-        border: none;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        background-color: rgba(243, 8, 8, 0);
-      }
-      .rightMiddleButton{
-        position: absolute;
-        right: 20px;
-        height: 150px;
-        width: 60px;  
-      }
-      .rightBotButton{
-        position: absolute;
-        right: 20px;
-        bottom: 20px;
-        height: 40px;
-        width: 100px; 
-      }
-      #rightMenuButton{
-        z-index: 9;
-        background-color: rgba(0, 0, 0, 0.7);
-        border-radius: 10px;
-        backdrop-filter: blur(5px);
-        opacity: 1;
-        -webkit-transition: opacity 0.3s;
-        transition: opacity 0.3s;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
-      .leftMiddleButton{
-        position: absolute;
-        left: 20px;
-        height: 150px;
-        width: 60px;  
-      }
-      .leftBotButton{
-        position: absolute;
-        left: 20px;
-        bottom: 20px;
-        height: 40px;
-        width: 100px; 
-      }
-      #leftMenuButton{
-        z-index: 9;
-        background-color: rgba(0, 0, 0, 0.7);
-        border-radius: 10px;
-        backdrop-filter: blur(5px);
-        opacity: 1;
-        -webkit-transition: opacity 0.3s;
-        transition: opacity 0.3s;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
-      .verticalLeftText{
-        width: fit-content;
-        height: fit-content;
-        writing-mode: vertical-lr;
-        text-orientation: mixed;
-        transform: scale(-1, -1);
-        color: #ffffff;
-        font-family: "DM Sans", sans-serif;
-        font-optical-sizing: auto;
-        font-weight: 400;
-        font-style: normal;
-        letter-spacing: 1%;
-        font-size: 28px;
-      }
-      @media (max-width: 768px) {
-        .verticalLeftText{
-          font-size: 24px;
-        }
-      }
-      .verticalRightText{
-        width: fit-content;
-        height: fit-content;
-        writing-mode: vertical-lr;
-        text-orientation: mixed;
-        color: #ffffff;
-        font-family: "DM Sans", sans-serif;
-        font-optical-sizing: auto;
-        font-weight: 400;
-        font-style: normal;
-        letter-spacing: 1%;
-        font-size: 28px;
-      }
-      @media (max-width: 768px) {
-        .verticalRightText{
-          font-size: 24px;
-        }
-      }
-      .horizontalText{
-        width: fit-content;
-        height: fit-content;
-        color: #ffffff;
-        font-family: "DM Sans", sans-serif;
-        font-optical-sizing: auto;
-        font-weight: 400;
-        font-style: normal;
-        letter-spacing: 1%;
-        font-size: 20px;
-      }
-      @media (max-width: 768px) {
-        .horizontalText{
-          font-size: 16px;
-        }
-      }
-      .loading{
-        z-index: 13;
-        position: fixed;
-        padding: 20px;
-        left: 50%;
-        transform: translate(-50%, 0%);
-        height: 60px;
-        width: 150px;
-        background-color: rgba(0, 0, 0, 0.7);
-        border-radius: 15px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        backdrop-filter: blur(5px);
-      }
-      .loadingText{
-        width: fit-content;
-        height: fit-content;
-        color: #04ff00;
-        font-family: "DM Sans", sans-serif;
-        font-optical-sizing: auto;
-        font-weight: 400;
-        font-style: normal;
-        letter-spacing: 1%;
-        font-size: 28px;
-      }
-      @media (max-width: 768px) {
-        .loadingText{
-          font-size: 24px;
-        }
-      }
+    <meta
+      name="description"
+      content="Platforma pro prohlížení a sdílení 3D modelů krojů, pořízených pomocí fotogrametrie."
+    />
 
 
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&display=swap"
+      rel="stylesheet"
+    />
 
-      .bigWhiteFont{
-        color: #ffffff;
-        font-family: "DM Sans", sans-serif;
-        font-optical-sizing: auto;
-        font-weight: 400;
-        font-style: normal;
-        letter-spacing: 1%;
-        font-size: 30px;
-      }
-      @media (max-width: 768px) {
-        .bigWhiteFont{
-          font-size: 26px;
-        }
-      }
-      .mediumWhiteFont{
-        color: #ffffff;
-        font-family: "DM Sans", sans-serif;
-        font-optical-sizing: auto;
-        font-weight: 400;
-        font-style: normal;
-        letter-spacing: 1%;
-        font-size: 22px;
-      }
-      @media (max-width: 768px) {
-        .mediumWhiteFont{
-          font-size: 18px;
-        }
-      }
-      .mediumGreenFont{
-        color: #04ff00;
-        font-family: "DM Sans", sans-serif;
-        font-optical-sizing: auto;
-        font-weight: 400;
-        font-style: normal;
-        letter-spacing: 1%;
-        font-size: 22px;
-      }
-      @media (max-width: 768px) {
-        .mediumGreenFont{
-          font-size: 18px;
-        }
-      }
-      .smallWhiteFont{
-        color: #ffffff;
-        font-family: "DM Sans", sans-serif;
-        font-optical-sizing: auto;
-        font-weight: 400;
-        font-style: normal;
-        letter-spacing: 1%;
-        font-size: 20px;
-      }
-      @media (max-width: 768px) {
-        .smallWhiteFont{
-          font-size: 16px;
-        }
-      }
-      .smallGreenFont{
-        color: #04ff00;
-        font-family: "DM Sans", sans-serif;
-        font-optical-sizing: auto;
-        font-weight: 400;
-        font-style: normal;
-        letter-spacing: 1%;
-        font-size: 20px;
-      }
-      @media (max-width: 768px) {
-        .smallGreenFont{
-          font-size: 16px;
-        }
-      }
-      .smallRedFont{
-        color: #ff2a00;
-        font-family: "DM Sans", sans-serif;
-        font-optical-sizing: auto;
-        font-weight: 400;
-        font-style: normal;
-        letter-spacing: 1%;
-        font-size: 20px;
-      }
-      @media (max-width: 768px) {
-        .smallRedFont{
-          font-size: 16px;
-        }
-      }
-      .titleFont{
-        color: #ffffff;
-        font-family: "Josefin Sans", sans-serif;
-        font-optical-sizing: auto;
-        font-weight: 400;
-        font-style: normal;
-        letter-spacing: 1%;
-        font-size: 40px;
-      }
-      @media (max-width: 768px) {
-        .titleFont{
-          font-size: 36px;
-        }
-      }
-
-
-
-      #costumeForm{
-        z-index: 12;
-        position: fixed;
-        padding-left: 40px;
-        padding-right: 40px;
-        padding-bottom: 20px;
-        padding-top: 20px;
-        height: 80%;
-        width: 40%;
-        max-width: 600px;
-        left: 50%;
-        transform: translate(-50%, 0%);
-        background-color: rgba(0, 0, 0, 0.5);
-        border-radius: 15px;
-        opacity: 0;
-        pointer-events: none;
-        backdrop-filter: blur(5px);
-      }
-      #formRowsContainer{        
-        height: 80%;
-        width: 100%;
-        max-width: 600px;
-        background-color: rgba(55, 252, 130, 0);
-        border-radius: 15px;
-        overflow-y: scroll;
-        scrollbar-width: none;
-        margin: auto
-      }
-      .title{
-        width: 100%;
-        height: 10%;
-        border-radius: 15px;
-        padding-bottom: 10px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        background-color: rgba(0, 0, 0, 0);
-      }
-      .titleFrame{
-        width: fit-content;
-        height: fit-content;
-        text-align: center;
-        background-color: rgba(255, 0, 0, 0);
-      }
-      .inputTextField{
-        width: 100%;
-        height: 50px;
-        margin-top: 10px;
-        margin-bottom: 10px;
-        border-radius: 10px;
-        border: none;
-        outline: none;
-        padding-left: 10px;
-        background-color: rgba(0, 0, 0, 0.7);
-      }
-      .inputTextFieldSmall{
-        width: 100%;
-        height: 40px;
-        margin-top: 10px;
-        margin-bottom: 10px;
-        border-radius: 10px;
-        border: none;
-        outline: none;
-        padding-left: 10px;
-        background-color: rgba(0, 0, 0, 0.7);
-      }
-      #addButtonsContainer{
-        display: grid;
-        margin: auto;
-        grid-template-columns: 1fr 1fr;
-        grid-gap: 20px 20px;
-        width: fit-content;
-        height: 60px;
-        padding: 10px;
-      }
-      .addButton{
-        width: fit-content;
-        height: 100%;
-        border-radius: 10px;
-        padding-left: 10px;
-        padding-right: 10px;
-        border: none;
-        background-color:rgba(0, 0, 0, 0.7);
-      }
-      .bottomButtonContainer{
-        width: 100%;
-        height: 60px;
-        display: grid;
-        grid-template-columns: 1fr 1fr 1fr 1fr;
-        grid-gap: 20px 20px;
-        padding-top: 10px;
-      }
-      .resetButton{
-        width: 100%;
-        height: 100%;
-        border-radius: 10px;
-        border: none;
-        background-color:rgba(0, 0, 0, 0.7);
-      }
-      .tutorialButton{
-        width: 100%;
-        height: 100%;
-        border-radius: 10px;
-        border: none;
-        background-color:rgba(0, 0, 0, 0.7);
-      }
-      .previewButton{
-        width: 100%;
-        height: 100%;
-        border-radius: 10px;
-        border: none;
-        background-color:rgba(0, 0, 0, 0.7);
-      }
-      .submitButton{
-        width: 100%;
-        height: 100%;
-        border-radius: 10px;
-        border: none;
-        background-color:rgba(0, 0, 0, 0.7);
-      }
-      .imageCard{
-        height: fit-content;
-        width: 100%;
-        margin: auto;
-        background-color: rgba(0, 0, 0, 0.5);
-        border-radius: 15px;
-        padding-top: 10px;
-        padding-right: 10px;
-        padding-left: 10px;
-      }
-      .imageNameInputGrid{
-        display: grid;
-        padding-top: 20px;
-        padding-bottom: 20px;
-        height: fit-content;
-        width: 100%;
-        grid-template-columns: 1fr 1fr;
-        grid-gap: 20px 20px;
-        background-color: rgba(55, 68, 252, 0);
-        border-radius: 15px;
-      }
-      .hiddenFileInput{
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        opacity: 0;
-        pointer-events: none;
-        transform: translate(0%, 40px);
-      }
-      .successContainer{
-        z-index: 13;
-        position: fixed;
-        padding: 20px;
-        left: 50%;
-        transform: translate(-50%, 0%);
-        height: 200px;
-        width: 30%;
-        max-width: 400px;
-        background-color: rgba(0, 0, 0, 0.7);
-        border-radius: 15px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
-      .success{
-        width: fit-content;
-        height: fit-content;
-        text-align: center;
-        color: #1aff00;
-        font-family: "DM Sans", sans-serif;
-        font-optical-sizing: auto;
-        font-weight: 400;
-        font-style: normal;
-        letter-spacing: 1%;
-        font-size: 34px;
-      }
-      @media (max-width: 768px) {
-        .success{
-          font-size: 28px;
-        }
-      }
-      .closeButtonForm{
-        position: absolute;
-        right: 40px;
-        height: 70px;
-        width: fit-content;
-        border: none;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        background-color: rgba(243, 8, 8, 0);
-      }
-
-      #aboutContainer{
-        z-index: 13;
-        position: absolute;
-        left: 50%;
-        bottom: 50%;
-        width: fit-content;
-        padding-left: 20px;
-        padding-right: 20px;
-        padding-top: 0px;
-        padding-bottom: 10px;
-        height: fit-content;
-        background-color: rgba(0, 0, 0, 0.7);
-        border-radius: 15px;
-        border: none;
-        transform: translate(-50%, 50%);
-        backdrop-filter: blur(5px);
-        opacity: 0;
-        pointer-events: none;
-      }
-      @media (max-width: 768px) {
-        #aboutContainer{
-          width: 100%;
-          height: 100%;
-          border-radius: 0px;
-        }
-      }
-
-      a:link{
-        text-decoration: none;
-        color: rgb(139, 255, 31);
-      }
-      a:visited {
-        color: rgb(139, 255, 31);
-        text-decoration: none;
-      }
-      a:hover {
-        color: rgb(55, 255, 0);
-        text-decoration: none;
-      }
-      
-    </style>
-    <script type="module" crossorigin src="/assets/main-CpHBcj7p.js"></script>
-    <link rel="modulepreload" crossorigin href="/assets/modulepreload-polyfill-wMinxHhO.js">
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Josefin+Sans:ital,wght@0,100..700;1,100..700&display=swap"
+      rel="stylesheet"
+    />
+    <script type="module" crossorigin src="/assets/main-DBYUssmP.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/styles-UGzTbYpP.js">
+    <link rel="stylesheet" crossorigin href="/assets/styles-D4VWtdoi.css">
   </head>
   <body>
     <div id="screen">
       <canvas id="model-canvas"></canvas>
 
-      <div id="leftMenuButton" class="leftBotButton">
-        <div id="leftMenuButtonText" class="horizontalText">Popis</div>
-      </div>
-      <div id="rightMenuButton" class="rightBotButton">
-        <div id="rightMenuButtonText" class="horizontalText">Menu</div>
-      </div>
-
-      <div id="leftMenu">
-        <div class="costumeName">
-          <div id="costumeNameFrame" class="titleFont" ></div>
+      <div id="left-menu__button" class="left-button left-button--bottom">
+        <div id="left-menu__button__text" class="main-font horizontal-text">
+          Popis
         </div>
-        <div id="leftMenuAppear">
-          <div id="costumeDescriptionContainer">
-            <div id="costumeDescription" class="mediumWhiteFont"></div>
-          </div>
+      </div>
+      <div id="right-menu__button" class="right-button right-button--bottom">
+        <div id="right-menu__button__text" class="main-font horizontal-text">
+          Menu
         </div>
       </div>
 
-      <div id="rightMenu">
-        <div id="rightMenuPicker">
-          <div class="rightMenuTopButtonsContainer">
-            <button id="imagesButton" class="rightMenuTopButton mediumGreenFont">Obrázky</button>
-            <button id="partsButton" class="rightMenuTopButton mediumWhiteFont">Součásti</button>
-            <button id="costumesButton" class="rightMenuTopButton mediumWhiteFont">Kroje</button>
-          </div>
-          <div id="rightMenuPickerList"></div>
+      <div id="left-menu">
+        <div class="left-menu__title title-font"></div>
+        <div id="left-menu__description-container">
+          <div id="left-menu__description" class="main-font"></div>
         </div>
-        <div class="rightMenuBotButtonsContainer">
-          <button id="resetCamera" class="rightMenuBotButton smallWhiteFont">Resetovat Pohled</button>
-          <button id="contribute" type="button" class="rightMenuBotButton smallWhiteFont">
+      </div>
+
+      <div id="right-menu">
+        <div id="right-menu__top">
+          <div class="right-menu__top__buttons-container">
+            <button id="images-button" class="main-font small-font green">
+              Obrázky
+            </button>
+            <button id="parts-button" class="main-font small-font">
+              Součásti
+            </button>
+            <button id="costumes-button" class="main-font small-font">
+              Kroje
+            </button>
+          </div>
+          <div id="right-menu__top__content"></div>
+        </div>
+        <div class="right-menu__bot">
+          <button id="reset-camera" class="main-font small-font">
+            Resetovat Pohled
+          </button>
+          <button id="contribute" type="button" class="main-font small-font">
             Nahrát Kroj
           </button>
-          <button id="showAbout" class="rightMenuBotButton smallWhiteFont" >O aplikaci</button>
+          <button id="show-about" class="main-font small-font">
+            O aplikaci
+          </button>
         </div>
       </div>
 
-      <form name="costumeUploadForm" id="costumeForm" autocomplete="off" method="POST" enctype="multipart/form-data">
-        <div id="title" class="title">
-          <div class="titleFrame titleFont">Nový Kroj</div>
-        </div>
-        <div id="formRowsContainer">
-          <input type="text" id="name" class="inputTextField mediumWhiteFont" name="name" placeholder="Název kroje" autocomplete="off" required />
-          <input type="text" id="description" class="inputTextField mediumWhiteFont" name="description" placeholder="Popis kroje" autocomplete="off" required />
+      <form
+        name="costumeUploadForm"
+        id="costume-form"
+        autocomplete="off"
+        method="POST"
+        enctype="multipart/form-data"
+      >
+        <div id="form__title" class="title-font">Nový Kroj</div>
+        <div id="form__rows">
+          <input
+            type="text"
+            id="name"
+            class="input-text-field main-font"
+            name="name"
+            placeholder="Název kroje"
+            autocomplete="off"
+            required
+          />
+          <input
+            type="text"
+            id="description"
+            class="input-text-field main-font"
+            name="description"
+            placeholder="Popis kroje"
+            autocomplete="off"
+            required
+          />
 
-          <div id="addButtonsContainer">
-            <input type="file" id="parts" class="hiddenFileInput" name="partFiles" multiple accept=".glb" required >
-            <button onclick="document.getElementById('parts').click();" type="button" class="addButton smallWhiteFont" >Nahrát modely</button>
-            <input type="file" id="images" class="hiddenFileInput" name="images" multiple accept=".jpg, .png, .jpeg" style="display:none;" />
-            <button onclick="document.getElementById('images').click();" type="button" class="addButton smallWhiteFont" >Nahrát obrázky</button>
+          <div id="form__add-buttons">
+            <input
+              type="file"
+              id="parts"
+              class="hidden-file-input"
+              name="partFiles"
+              multiple
+              accept=".glb"
+              required
+            />
+            <button
+              onclick="document.getElementById('parts').click()"
+              type="button"
+              class="form__add-button main-font small-font"
+            >
+              Nahrát modely
+            </button>
+            <input
+              type="file"
+              id="images"
+              class="hidden-file-input"
+              name="images"
+              multiple
+              accept=".jpg, .png, .jpeg"
+              style="display: none"
+            />
+            <button
+              onclick="document.getElementById('images').click()"
+              type="button"
+              class="form__add-button main-font small-font"
+            >
+              Nahrát obrázky
+            </button>
           </div>
         </div>
-        <div class="bottomButtonContainer">
-          <button id="resetForm" type="button" class="resetButton smallRedFont">Zrušit</button>
+        <div class="form__buttons">
+          <button
+            id="reset-form"
+            type="button"
+            class="reset-button main-font small-font red"
+          >
+            Zrušit
+          </button>
           <a href="/tutorial.html">
-            <button type="button" class="tutorialButton smallWhiteFont">Návod</button>
+            <button class="tutorial-button main-font small-font">Návod</button>
           </a>
-          <button id="preview" type="button" class="previewButton smallWhiteFont">Náhled</button>
-          <button type="submit" id="submit" class="submitButton smallGreenFont">Nahrát</button>
+          <button
+            id="preview"
+            type="button"
+            class="preview-button main-font small-font"
+          >
+            Náhled
+          </button>
+          <button
+            type="submit"
+            id="submit"
+            class="submit-button main-font small-font green"
+          >
+            Nahrát
+          </button>
         </div>
       </form>
 
-      <div id="aboutContainer">
-        <div class="fullImageName bigWhiteFont">
-          O aplikaci
-        </div>
-        <div class="about mediumWhiteFont">
-          Cílem aplikace bylo vytvořit veřejný prostor pro dokumentaci a&nbsp;prezentaci krojů a&nbsp;přitom zjednodušit proces skenování a&nbsp;sdílení modelů.<br />
+      <div id="about-container">
+        <div class="fullImageName main-font large-font">O aplikaci</div>
+        <div
+          class="main-font"
+          style="grid-row-start: 2; grid-column-start: span 2"
+        >
+          Cílem aplikace bylo vytvořit veřejný prostor pro dokumentaci
+          a&nbsp;prezentaci krojů a&nbsp;přitom zjednodušit proces skenování
+          a&nbsp;sdílení modelů.<br />
           <br />
-          Hlavní částí je prohlížeč kroje, který může návštěvník otáčet (levé tlačítko), přibližovat (kolečko) a&nbsp;posouvat (pravé tlačítko). V&nbsp;levé části se nachází popis kroje a&nbsp;na pravo menu se sekcemi Obrázky, Součásti a&nbsp;Kroje. V&nbsp;sekci Součásti může uživatel libovolně vypínat jednotlivé části oblečení pro prohlížení všech vrstev a&nbsp;sekce Kroje slouží pro výběr modelu.<br />
-          Dále je v&nbsp;menu možné nahrát nový kroj. Ten musí mít název, popis a&nbsp;alespoň jeden model ve formátu GLB. Rovněž je možné nahrát fotografie kroje, z nichž první bude použita v&nbsp;menu výběru krojů. <a href="/tutorial.html">Kompletní průvodce procesem</a> je přístupný z panelu nahrávání kroje.<br />
+          Hlavní částí je prohlížeč kroje, který může návštěvník otáčet (levé
+          tlačítko), přibližovat (kolečko) a&nbsp;posouvat (pravé tlačítko).
+          V&nbsp;levé části se nachází popis kroje a&nbsp;na pravo menu se
+          sekcemi Obrázky, Součásti a&nbsp;Kroje. V&nbsp;sekci Součásti může
+          uživatel libovolně vypínat jednotlivé části oblečení pro prohlížení
+          všech vrstev a&nbsp;sekce Kroje slouží pro výběr modelu.<br />
+          Dále je v&nbsp;menu možné nahrát nový kroj. Ten musí mít název, popis
+          a&nbsp;alespoň jeden model ve formátu GLB. Rovněž je možné nahrát
+          fotografie kroje, z nichž první bude použita v&nbsp;menu výběru krojů.
+          <a href="/tutorial.html">Kompletní průvodce procesem</a> je přístupný
+          z panelu nahrávání kroje.<br />
           <br />
-          Aplikace byla vytvořena v&nbsp;rámci magisterské práce "Interactive Web Platform for Presenting 3D Models of Folk Costumes" na FI MUNI.
+          Aplikace byla vytvořena v&nbsp;rámci magisterské práce "Interactive
+          Web Platform for Presenting 3D Models of Folk Costumes" na FI MUNI.
         </div>
       </div>
     </div>
