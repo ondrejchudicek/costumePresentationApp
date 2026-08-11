@@ -811,13 +811,10 @@ function onResize() {
     form.style.height = "100%";
     form.style.borderRadius = "0px";
 
-    rightMenuButton.className = "right-button right-button--bottom";
-    leftMenuButton.className = "left-button left-button--bottom";
-
-    document.getElementById("left-menu__button__text").className =
-      "main-font horizontal-text";
-    document.getElementById("right-menu__button__text").className =
-      "main-font horizontal-text";
+    rightMenuButton.className =
+      "menu-button right-button menu-button--bottom main-font";
+    leftMenuButton.className =
+      "menu-button left-button menu-button--bottom main-font";
 
     // setup close button funcitonality
     let closeLeft = createCloseButton("25px");
