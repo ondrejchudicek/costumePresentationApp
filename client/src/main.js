@@ -21,7 +21,6 @@ var height = canvas.clientHeight;
 const SCREEN = document.getElementById("screen");
 const CAMERA = new THREE.PerspectiveCamera(65, width / height, 0.01, 100);
 const SCENE = new THREE.Scene();
-const CONTROLS = new OrbitControls(CAMERA, RENDERER.domElement);
 const GLTF_LOADER = new GLTFLoader();
 const COSTUME_UPLOAD_FORM = document.forms.costumeUploadForm;
 var loadedCostumes = new Array(); // [{id, partMeshes[]}]
@@ -34,6 +33,9 @@ var rightMenuSelected = 0;
 setupRenderer();
 setAboutButtons();
 setupCamera();
+// need to setup camera before defining controls
+const CONTROLS = new OrbitControls(CAMERA, RENDERER.domElement);
+setupControls();
 await setupBackground();
 setupRightMenuTopButtons();
 onResize();
@@ -98,13 +100,15 @@ function setupCamera() {
   CAMERA.position.y = 0;
   CAMERA.position.z = 2;
 
-  CONTROLS.enablePan = true;
-  CONTROLS.enableDamping = true;
-  CONTROLS.dampingFactor = 0.1;
-
   document.getElementById("reset-camera").onclick = () => {
     resetCamera();
   };
+}
+
+function setupControls() {
+  CONTROLS.enablePan = true;
+  CONTROLS.enableDamping = true;
+  CONTROLS.dampingFactor = 0.1;
 }
 
 async function setupBackground() {
@@ -329,7 +333,7 @@ function showFullImage(img, imageName, imageIndex) {
     fullImageContainer.id = "full-image-container";
     document.getElementById("screen").appendChild(fullImageContainer);
 
-    closeButton = createCloseButton("35px");
+    closeButton = createCloseButton("25px");
     closeButton.className = "close-button full-image-container__close-button";
     fullImageContainer.appendChild(closeButton);
     closeButton.onclick = () => {
@@ -395,19 +399,15 @@ function showFullImage(img, imageName, imageIndex) {
 }
 
 function createCloseButton(size) {
-  let closeButton = document.createElement("div");
-  closeButton.className = "close-button";
-  closeButton.title = "Close";
-
   let cross = document.createElement("img");
   cross.src = "/icons/cross.svg";
   cross.alt = "Close";
   cross.style.width = size;
   cross.style.height = size;
+  cross.className = "close-button";
+  cross.title = "Close";
 
-  closeButton.appendChild(cross);
-
-  return closeButton;
+  return cross;
 }
 
 function resetCamera() {
@@ -419,8 +419,9 @@ function resetCamera() {
 
 // sets functionality of the About element
 function setAboutButtons() {
-  let closeButton = createCloseButton("35px");
-  closeButton.style = "grid-row-start: 1; grid-column-start: 2";
+  let closeButton = createCloseButton("20px");
+  closeButton.style.gridRowStart = 1;
+  closeButton.style.gridColumnStart = 2;
   let aboutContainer = document.getElementById("about-container");
   closeButton.onclick = () => {
     hideElem(aboutContainer);
@@ -475,9 +476,11 @@ function placePartTogglePreview(index, toggleButtonsContainer) {
 function displayImages(rightMenuList, activeCostume) {
   rightMenuSelected = 0;
   document.getElementById("images-button").className =
-    "main-font small-font green";
-  document.getElementById("parts-button").className = "main-font small-font";
-  document.getElementById("costumes-button").className = "main-font small-font";
+    "main-font right-menu-sections-font green";
+  document.getElementById("parts-button").className =
+    "main-font right-menu-sections-font";
+  document.getElementById("costumes-button").className =
+    "main-font right-menu-sections-font";
   rightMenuList.innerHTML = "";
 
   for (let i = 0; i < activeCostume.images.length; i++) {
@@ -494,10 +497,12 @@ function displayImages(rightMenuList, activeCostume) {
 // construct part toggles in the right menu
 function displayPartToggles(togglesContainer, activeCostume) {
   rightMenuSelected = 1;
-  document.getElementById("images-button").className = "main-font small-font";
+  document.getElementById("images-button").className =
+    "main-font right-menu-sections-font";
   document.getElementById("parts-button").className =
-    "main-font small-font green";
-  document.getElementById("costumes-button").className = "main-font small-font";
+    "main-font right-menu-sections-font green";
+  document.getElementById("costumes-button").className =
+    "main-font right-menu-sections-font";
   togglesContainer.innerHTML = "";
 
   if (activeCostumeID == -2) {
@@ -514,10 +519,12 @@ function displayPartToggles(togglesContainer, activeCostume) {
 // construct buttons for selecting costumes in the right menu
 function displayModelSelectButtons(costumesContainer, loader) {
   rightMenuSelected = 2;
-  document.getElementById("images-button").className = "main-font small-font";
-  document.getElementById("parts-button").className = "main-font small-font";
+  document.getElementById("images-button").className =
+    "main-font right-menu-sections-font";
+  document.getElementById("parts-button").className =
+    "main-font right-menu-sections-font";
   document.getElementById("costumes-button").className =
-    "main-font small-font green";
+    "main-font right-menu-sections-font green";
   costumesContainer.innerHTML = "";
 
   for (let i = 0; i < COSTUMES.length; i++) {
@@ -565,20 +572,11 @@ function placeModelSelectCardButton(costume, modelSelectCard) {
 }
 
 function setupFormClose() {
-  let closeButton = document.createElement("div");
-  closeButton.className = "close-button";
-  closeButton.title = "Close";
+  let closeButton = createCloseButton("20px");
   closeButton.onclick = () => {
     hideElem(COSTUME_UPLOAD_FORM);
   };
 
-  let cross = document.createElement("img");
-  cross.src = "/icons/cross.svg";
-  cross.alt = "Close";
-  cross.style.width = "70%";
-  cross.style.height = "70%";
-
-  closeButton.appendChild(cross);
   document.getElementById("form__title").appendChild(closeButton);
 }
 
@@ -817,7 +815,7 @@ function onResize() {
       "menu-button left-button menu-button--bottom main-font";
 
     // setup close button funcitonality
-    let closeLeft = createCloseButton("25px");
+    let closeLeft = createCloseButton("18px");
     closeLeft.onclick = () => {
       showHide("left-menu__button", "left-menu");
       leftMenu.style.zIndex = 10;
@@ -826,7 +824,7 @@ function onResize() {
     };
     leftMenu.appendChild(closeLeft);
 
-    let closeRight = createCloseButton("25px");
+    let closeRight = createCloseButton("18px");
     closeRight.onclick = () => {
       closeRightMenu();
     };

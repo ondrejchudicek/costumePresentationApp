@@ -138,11 +138,17 @@ body {
 .right-menu__top__buttons-container {
   display: flex;
   justify-content: space-evenly;
+  align-items: center;
   width: 100%;
   height: fit-content;
   padding-top: 0.5rem;
   background-color: rgba(6, 212, 37, 0);
   flex-wrap: wrap;
+}
+@media (max-width: 768px) {
+  .right-menu__top__buttons-container {
+    justify-content: space-between;
+  }
 }
 .right-menu__top__buttons-container > button {
   width: fit-content;
@@ -265,15 +271,6 @@ body {
   border-radius: 1rem;
   padding: 1.5rem;
 }
-.close-button {
-  height: fit-content;
-  width: fit-content;
-  border: none;
-  /*display: flex;
-  justify-content: center;
-  align-items: center;*/
-  background-color: rgba(243, 8, 8, 0);
-}
 .menu-button {
   z-index: 9;
   background-color: rgba(0, 0, 0, 0.5);
@@ -355,7 +352,7 @@ body {
 }
 @media (max-width: 768px) {
   .title-font {
-    font-size: 2.3rem;
+    font-size: 2.2rem;
   }
 }
 .main-font {
@@ -369,7 +366,7 @@ body {
 }
 @media (max-width: 768px) {
   .main-font {
-    font-size: 1.3rem;
+    font-size: 1.1rem;
   }
 }
 .large-font {
@@ -377,7 +374,7 @@ body {
 }
 @media (max-width: 768px) {
   .large-font {
-    font-size: 1.8rem;
+    font-size: 1.6rem;
   }
 }
 .medium-font {
@@ -385,7 +382,7 @@ body {
 }
 @media (max-width: 768px) {
   .medium-font {
-    font-size: 1.2rem;
+    font-size: 1rem;
   }
 }
 .small-font {
@@ -393,6 +390,14 @@ body {
 }
 @media (max-width: 768px) {
   .small-font {
+    font-size: 0.8rem;
+  }
+}
+.right-menu-sections-font {
+  font-size: 1.2rem;
+}
+@media (max-width: 768px) {
+  .right-menu-sections-font {
     font-size: 1rem;
   }
 }
@@ -533,13 +538,6 @@ body {
 #form__title .close-button {
   position: absolute;
   right: 2rem;
-  height: 3rem;
-  width: fit-content;
-  border: none;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: rgba(243, 8, 8, 0);
 }
 #about-container {
   z-index: 13;
@@ -572,7 +570,7 @@ body {
     min-width: 0px;
   }
 }
-#about-container > .close-button {
+#about-container .close-button {
   justify-self: right;
 }
 a:link {
@@ -700,7 +698,7 @@ a:hover {
   .tutorial__button {
     width: 5rem;
     height: 2.5rem;
-    font-size: 1.2rem;
+    font-size: 1rem;
   }
 }
 #tutorial-exit {
