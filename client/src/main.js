@@ -36,16 +36,16 @@ setupCamera();
 // need to setup camera before defining controls
 const CONTROLS = new OrbitControls(CAMERA, RENDERER.domElement);
 setupControls();
-await setupBackground();
+setupFlatColorBG();
 setupRightMenuTopButtons();
-onResize();
+adaptToScreenResolution();
 setupForm();
 resetForm();
 animate();
 
 // place first costume
 if (COSTUMES.length > 0) {
-  await replaceCostume(GLTF_LOADER, COSTUMES[0]);
+  await replaceRenderedCostume(GLTF_LOADER, COSTUMES[0]);
 }
 
 function Costume(name, description, parts, images) {
@@ -111,7 +111,18 @@ function setupControls() {
   CONTROLS.dampingFactor = 0.1;
 }
 
-async function setupBackground() {
+function setupFlatColorBG() {
+  const SPHERE_GEOMETRY = new THREE.SphereGeometry(50, 64, 64);
+
+  const SPHERE_MATERIAL = new THREE.MeshBasicMaterial({
+    side: THREE.BackSide,
+    color: new THREE.Color(10 / 255, 40 / 255, 7 / 255),
+  });
+
+  SCENE.add(new THREE.Mesh(SPHERE_GEOMETRY, SPHERE_MATERIAL));
+}
+
+async function setupImageBG() {
   const SPHERE_TEXTURE = await new THREE.TextureLoader().loadAsync(
     "/textures/hdri_final-75b.jpg",
   );
@@ -119,14 +130,14 @@ async function setupBackground() {
   const SPHERE_GEOMETRY = new THREE.SphereGeometry(50, 64, 64);
 
   const SPHERE_MATERIAL = new THREE.MeshBasicMaterial({
-    //map: SPHERE_TEXTURE,
+    map: SPHERE_TEXTURE,
     side: THREE.BackSide,
-    //color: new THREE.Color(0.8, 0.8, 0.8)
-    color: new THREE.Color(10 / 255, 40 / 255, 7 / 255),
+    color: new THREE.Color(0.8, 0.8, 0.8),
   });
 
-  // fix skysphere rotation
   const SKY_SPHERE = new THREE.Mesh(SPHERE_GEOMETRY, SPHERE_MATERIAL);
+
+  // fix skysphere rotation
   SKY_SPHERE.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), 0.03);
   SKY_SPHERE.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), Math.PI * 0.5);
 
@@ -137,7 +148,7 @@ function setupRightMenuTopButtons() {
   let rightMenuList = document.getElementById("right-menu__top__content");
 
   document.getElementById("images-button").onclick = () => {
-    displayImages(rightMenuList, activeCostume);
+    displayImagesInRightMenu(rightMenuList, activeCostume);
   };
   document.getElementById("parts-button").onclick = () => {
     displayPartToggles(rightMenuList, activeCostume);
@@ -158,21 +169,24 @@ function setupForm() {
   setupFormClose();
 
   document.getElementById("preview").onclick = () => {
-    previewUploadModel();
+    previewFormModel();
   };
   document.getElementById("reset-form").onclick = () => {
     resetForm();
   };
 
-  document.getElementById("images").addEventListener("change", getImages);
-  document.getElementById("parts").addEventListener("change", getParts);
+  document
+    .getElementById("images")
+    .addEventListener("change", generateImageNameInputGrid);
+  document
+    .getElementById("parts")
+    .addEventListener("change", generateModelNameInputGrid);
   COSTUME_UPLOAD_FORM.addEventListener("submit", async (e) => {
-    submit(e);
+    submitForm(e);
   });
 }
 
-// removes a costume from scene and places a new one, loads it if needed, updates menus with new info
-async function replaceCostume(loader, costume) {
+async function replaceRenderedCostume(loader, costume) {
   let costumeID = costume.costumeID;
 
   if (activeCostumeID != -1 && costumeID != activeCostumeID) {
@@ -185,11 +199,11 @@ async function replaceCostume(loader, costume) {
       console.log("Costume " + costumeID + " not loaded, trying to load.");
 
       let loadingIcon = displayLoadingIcon();
-      let loadedCostume = await loadCostume(loader, costume);
+      let loadedCostume = await loadCostumeFromDB(loader, costume);
       loadingIcon.remove();
 
       if (loadedCostumes.length >= MAX_LOADED) {
-        disposeOldest(loadedCostumes);
+        disposeOldestCostumeFromMemory(loadedCostumes);
       }
 
       loadedCostumes.push(loadedCostume);
@@ -197,7 +211,7 @@ async function replaceCostume(loader, costume) {
       console.log("Costume " + costumeID + " successfully loaded");
     }
 
-    placeCostume(loadedCostumes[newCostumeIndex]);
+    placeCostumeToScene(loadedCostumes[newCostumeIndex]);
     activeParts = new Array(
       loadedCostumes[newCostumeIndex].partMeshes.length,
     ).fill(true);
@@ -205,19 +219,24 @@ async function replaceCostume(loader, costume) {
     activeCostumeID = activeCostume.costumeID;
   }
 
-  setNameDescription(costume.name, costume.description);
+  updateMenusInfo(costume);
+}
 
-  // update right display
+function updateMenusInfo(costume) {
+  setCostumeNameAndDescription(costume.name, costume.description);
+  updateRightMenu(costume);
+}
+
+function updateRightMenu(costume) {
   let rightMenuList = document.getElementById("right-menu__top__content");
   if (rightMenuSelected == 0) {
-    displayImages(rightMenuList, costume);
+    displayImagesInRightMenu(rightMenuList, costume);
   } else if (rightMenuSelected == 1) {
     displayPartToggles(rightMenuList, costume);
   }
 }
 
-// requests costume parts from server
-async function loadCostume(loader, costume) {
+async function loadCostumeFromDB(loader, costume) {
   let partMeshes = new Array();
   let part;
 
@@ -238,13 +257,13 @@ async function loadCostume(loader, costume) {
   return new LoadedCostume(costume.costumeID, partMeshes);
 }
 
-function placeCostume(loadedCostume) {
+function placeCostumeToScene(loadedCostume) {
   for (let i = 0; i < loadedCostume.partMeshes.length; i++) {
-    placeMesh(loadedCostume.partMeshes[i]);
+    placeMeshToScene(loadedCostume.partMeshes[i]);
   }
 }
 
-function placeMesh(mesh) {
+function placeMeshToScene(mesh) {
   mesh.scene.position.y = Y_OFFSET;
   SCENE.add(mesh.scene);
 }
@@ -268,7 +287,7 @@ function removeCostumeFromScene(activeCostumeIndex, activeParts) {
   }
 }
 
-function disposeOldest(loadedCostumes) {
+function disposeOldestCostumeFromMemory(loadedCostumes) {
   for (let i = 0; i < loadedCostumes[0].partMeshes.length; i++) {
     let gltf = loadedCostumes[0].partMeshes[i];
     gltf.scene.traverse((obj) => {
@@ -287,13 +306,13 @@ function disposeOldest(loadedCostumes) {
   loadedCostumes.shift();
 }
 
-function setNameDescription(name, description) {
+function setCostumeNameAndDescription(name, description) {
   document.getElementsByClassName("left-menu__title")[0].textContent = name;
   document.getElementById("left-menu__description").textContent = description;
 }
 
 // show or hide a part of the costume and update its button
-function togglePart(partIndex, button) {
+function toggleCostumePart(partIndex, button) {
   if (partIndex >= activeParts.length) {
     console.log("partIndex out of range");
     return -1;
@@ -306,72 +325,35 @@ function togglePart(partIndex, button) {
     );
     button.className = "part-toggle-button main-font";
   } else {
-    placeMesh(loadedCostumes[activeCostumeIndex].partMeshes[partIndex]);
+    placeMeshToScene(loadedCostumes[activeCostumeIndex].partMeshes[partIndex]);
     button.className = "part-toggle-button main-font green";
   }
   activeParts[partIndex] = !activeParts[partIndex];
 }
 
 // loads images relevant for the costume and displays in the right menu
-function loadImage(src, alt, imageName, imagesContainer, imageIndex) {
+function loadImageFromDB(src, alt, imageName, imagesContainer, imageIndex) {
   let img = document.createElement("img");
   img.src = src;
   img.alt = alt;
   img.onclick = () => {
-    showFullImage(img, imageName, imageIndex);
+    showFullscreenImage(img, imageName, imageIndex);
   };
 
   imagesContainer.appendChild(img);
 }
 
-// shows image in bigger window
-function showFullImage(img, imageName, imageIndex) {
-  let fullImageContainer, closeButton, next, prev, name, fullImage;
+function showFullscreenImage(img, imageName, imageIndex) {
+  let next, prev, name;
 
   if (!document.getElementById("full-image-container")) {
-    fullImageContainer = document.createElement("div");
-    fullImageContainer.id = "full-image-container";
-    document.getElementById("screen").appendChild(fullImageContainer);
-
-    closeButton = createCloseButton("25px");
-    closeButton.className = "close-button full-image-container__close-button";
-    fullImageContainer.appendChild(closeButton);
-    closeButton.onclick = () => {
-      closeElem(fullImageContainer);
-    };
-
-    next = document.createElement("img");
-    next.className = "full-image-container__button";
-    next.src = "./icons/next.svg";
-    next.id = "full-image-container__next";
-    fullImageContainer.appendChild(next);
-
-    prev = document.createElement("img");
-    prev.className = "full-image-container__button";
-    prev.src = "./icons/prev.svg";
-    prev.id = "full-image-container__prev";
-    fullImageContainer.appendChild(prev);
-
-    name = document.createElement("div");
-    name.id = "full-image-container__name";
-    name.className = "title-font";
-    fullImageContainer.appendChild(name);
-
-    fullImage = img.cloneNode(true);
-    fullImage.id = "full-image-container__image";
-    fullImageContainer.appendChild(fullImage);
+    ({ next, prev, name } = createFullImageContainer(img));
   } else {
-    fullImageContainer = document.getElementById("full-image-container");
-    next = document.getElementById("full-image-container__next");
-    prev = document.getElementById("full-image-container__prev");
-    name = document.getElementById("full-image-container__name");
-    fullImage = document.getElementById("full-image-container__image");
-
-    fullImage.src = activeCostume.images[imageIndex].path;
+    ({ next, prev, name } = modifyFullImageContainer(imageIndex));
   }
 
   prev.onclick = () => {
-    showFullImage(
+    showFullscreenImage(
       document.getElementById("right-menu__top__content").children[
         (imageIndex - 1 + activeCostume.images.length) %
           activeCostume.images.length
@@ -386,7 +368,7 @@ function showFullImage(img, imageName, imageIndex) {
   };
 
   next.onclick = (event) => {
-    showFullImage(
+    showFullscreenImage(
       document.getElementById("right-menu__top__content").children[
         (imageIndex + 1) % activeCostume.images.length
       ],
@@ -396,6 +378,62 @@ function showFullImage(img, imageName, imageIndex) {
   };
 
   name.textContent = imageName;
+}
+
+function createFullImageContainer(img) {
+  let fullImageContainer = document.createElement("div");
+  fullImageContainer.id = "full-image-container";
+  document.getElementById("screen").appendChild(fullImageContainer);
+
+  let closeButton = createCloseButton("25px");
+  closeButton.className = "close-button full-image-container__close-button";
+  fullImageContainer.appendChild(closeButton);
+  closeButton.onclick = () => {
+    closeElem(fullImageContainer);
+  };
+
+  let next = document.createElement("img");
+  next.className = "full-image-container__button";
+  next.src = "./icons/next.svg";
+  next.id = "full-image-container__next";
+  fullImageContainer.appendChild(next);
+
+  let prev = document.createElement("img");
+  prev.className = "full-image-container__button";
+  prev.src = "./icons/prev.svg";
+  prev.id = "full-image-container__prev";
+  fullImageContainer.appendChild(prev);
+
+  let name = document.createElement("div");
+  name.id = "full-image-container__name";
+  name.className = "title-font";
+  fullImageContainer.appendChild(name);
+
+  let fullImage = img.cloneNode(true);
+  fullImage.id = "full-image-container__image";
+  fullImageContainer.appendChild(fullImage);
+
+  return {
+    next: next,
+    prev: prev,
+    name: name,
+  };
+}
+
+function modifyFullImageContainer(imageIndex) {
+  let fullImageContainer = document.getElementById("full-image-container");
+  let next = document.getElementById("full-image-container__next");
+  let prev = document.getElementById("full-image-container__prev");
+  let name = document.getElementById("full-image-container__name");
+  let fullImage = document.getElementById("full-image-container__image");
+
+  fullImage.src = activeCostume.images[imageIndex].path;
+
+  return {
+    next: next,
+    prev: prev,
+    name: name,
+  };
 }
 
 function createCloseButton(size) {
@@ -417,7 +455,6 @@ function resetCamera() {
   CONTROLS.dampingFactor = 0.1;
 }
 
-// sets functionality of the About element
 function setAboutButtons() {
   let closeButton = createCloseButton("20px");
   closeButton.style.gridRowStart = 1;
@@ -433,8 +470,7 @@ function setAboutButtons() {
   };
 }
 
-// constructs a part's toggle button
-function placePartToggle(index, toggleButtonsContainer, parentCostume) {
+function placePartToggle(index, toggleButtonsContainer, parentCostume = null) {
   let toggle = document.createElement("button");
 
   if (activeParts[index]) {
@@ -443,37 +479,17 @@ function placePartToggle(index, toggleButtonsContainer, parentCostume) {
     toggle.className = "part-toggle-button main-font";
   }
 
-  toggle.textContent = parentCostume.parts[index].name;
+  toggle.textContent = parentCostume ? parentCostume.parts[index].name : index;
   toggle.index = index;
 
   toggleButtonsContainer.appendChild(toggle);
 
   toggle.onclick = () => {
-    togglePart(toggle.index, toggle);
+    toggleCostumePart(toggle.index, toggle);
   };
 }
 
-// constructs a part's toggle button for a preview model
-function placePartTogglePreview(index, toggleButtonsContainer) {
-  let toggle = document.createElement("button");
-
-  if (activeParts[index]) {
-    toggle.className = "part-toggle-button main-font green";
-  } else {
-    toggle.className = "part-toggle-button main-font";
-  }
-
-  toggle.textContent = index;
-  toggle.index = index;
-
-  toggleButtonsContainer.appendChild(toggle);
-  toggle.onclick = () => {
-    togglePart(toggle.index, toggle);
-  };
-}
-
-// construct images in the right menu
-function displayImages(rightMenuList, activeCostume) {
+function displayImagesInRightMenu(rightMenuList, activeCostume) {
   rightMenuSelected = 0;
   document.getElementById("images-button").className =
     "main-font right-menu-sections-font green";
@@ -484,7 +500,7 @@ function displayImages(rightMenuList, activeCostume) {
   rightMenuList.innerHTML = "";
 
   for (let i = 0; i < activeCostume.images.length; i++) {
-    loadImage(
+    loadImageFromDB(
       BASE_URL + activeCostume.images[i].path,
       "Image Missing",
       activeCostume.images[i].name,
@@ -494,7 +510,6 @@ function displayImages(rightMenuList, activeCostume) {
   }
 }
 
-// construct part toggles in the right menu
 function displayPartToggles(togglesContainer, activeCostume) {
   rightMenuSelected = 1;
   document.getElementById("images-button").className =
@@ -507,7 +522,7 @@ function displayPartToggles(togglesContainer, activeCostume) {
 
   if (activeCostumeID == -2) {
     for (let i = 0; i < activeParts.length; i++) {
-      placePartTogglePreview(i, togglesContainer);
+      placePartToggle(i, togglesContainer);
     }
   } else {
     for (let i = 0; i < activeParts.length; i++) {
@@ -516,7 +531,6 @@ function displayPartToggles(togglesContainer, activeCostume) {
   }
 }
 
-// construct buttons for selecting costumes in the right menu
 function displayModelSelectButtons(costumesContainer, loader) {
   rightMenuSelected = 2;
   document.getElementById("images-button").className =
@@ -539,16 +553,15 @@ function displayModelSelectButtons(costumesContainer, loader) {
 
       modelSelectCard.appendChild(img);
       modelSelectCard.onclick = () => {
-        replaceCostume(loader, COSTUMES[i]);
+        replaceRenderedCostume(loader, COSTUMES[i]);
       };
-      placeModelSelectCardButton(COSTUMES[i], modelSelectCard);
+      placeModelSelectButtonWithImage(COSTUMES[i], modelSelectCard);
     } else {
       placeModelSelectButton(COSTUMES[i], costumesContainer, loader);
     }
   }
 }
 
-// place a button for model selection
 function placeModelSelectButton(costume, modelSelectorContainer, loader) {
   let select = document.createElement("button");
   select.className = "main-font medium-font";
@@ -558,12 +571,11 @@ function placeModelSelectButton(costume, modelSelectorContainer, loader) {
   modelSelectorContainer.appendChild(select);
 
   select.onclick = () => {
-    replaceCostume(loader, select.costume);
+    replaceRenderedCostume(loader, select.costume);
   };
 }
 
-// place a button for model selection with image
-function placeModelSelectCardButton(costume, modelSelectCard) {
+function placeModelSelectButtonWithImage(costume, modelSelectCard) {
   let select = document.createElement("button");
   select.className = "main-font medium-font";
   select.textContent = costume.name;
@@ -581,7 +593,7 @@ function setupFormClose() {
 }
 
 // generate a grid of image+input field pair in the form for filling image names
-function getImages(evt) {
+function generateImageNameInputGrid(evt) {
   let images = evt.target.files;
 
   let imageNameInputGrid = document.createElement("div");
@@ -614,8 +626,8 @@ function getImages(evt) {
   document.getElementById("form__rows").appendChild(imageNameInputGrid);
 }
 
-// generate a grid of input field pair in the form for filling part names
-function getParts(evt) {
+// generate a grid of input field pair in the form for filling model names
+function generateModelNameInputGrid(evt) {
   let parts = evt.target.files;
 
   let imageNameInputGrid = document.createElement("div");
@@ -638,8 +650,7 @@ function getParts(evt) {
   document.getElementById("form__rows").appendChild(imageNameInputGrid);
 }
 
-// loads costume from the upload form for preview
-async function loadCostumePreview(loader, parts) {
+async function loadCostumePreviewFromForm(loader, parts) {
   let partMeshes = new Array();
 
   for (let i = 0; i < parts.length; i++) {
@@ -657,8 +668,7 @@ async function loadCostumePreview(loader, parts) {
   return new LoadedCostume(-2, partMeshes);
 }
 
-// displays costume from the upload form
-async function previewUploadModel() {
+async function previewFormModel() {
   parts = document.getElementById("parts").files;
 
   if (parts == null || parts.length == 0) return 0;
@@ -671,16 +681,15 @@ async function previewUploadModel() {
     removeCostumeFromScene(getLoadedCostumeIndex(activeCostumeID), activeParts);
   }
 
-  console.log("Previewing model.");
-  let loadedCostume = await loadCostumePreview(GLTF_LOADER, parts);
+  let loadedCostume = await loadCostumePreviewFromForm(GLTF_LOADER, parts);
 
   if (loadedCostumes.length >= MAX_LOADED) {
-    disposeOldest(loadedCostumes);
+    disposeOldestCostumeFromMemory(loadedCostumes);
   }
 
   loadedCostumes.push(loadedCostume);
   let newCostumeIndex = loadedCostumes.length - 1;
-  placeCostume(loadedCostumes[newCostumeIndex]);
+  placeCostumeToScene(loadedCostumes[newCostumeIndex]);
 
   activeParts = new Array(
     loadedCostumes[newCostumeIndex].partMeshes.length,
@@ -688,7 +697,10 @@ async function previewUploadModel() {
   activeCostumeID = -2;
 
   if (rightMenuSelected == 1) {
-    displayPartToggles(rightMenuList, null);
+    displayPartToggles(
+      document.getElementById("right-menu__top__content"),
+      null,
+    );
   }
 
   loading.remove();
@@ -704,8 +716,7 @@ function resetForm() {
   COSTUME_UPLOAD_FORM.reset();
 }
 
-// submit form with file size check, waits for results
-async function submit(e) {
+async function submitForm(e) {
   e.preventDefault();
 
   hideElem(COSTUME_UPLOAD_FORM);
@@ -785,8 +796,7 @@ async function submit(e) {
   }
 }
 
-// handles a change of layout and functionality on touchscreens and narrow screens
-function onResize() {
+function adaptToScreenResolution() {
   if (IS_TOUCH || window.innerWidth < 768) {
     let leftMenu = document.getElementById("left-menu");
     let leftMenuButton = document.getElementById("left-menu__button");
