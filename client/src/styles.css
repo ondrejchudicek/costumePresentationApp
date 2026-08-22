@@ -3,6 +3,9 @@
 *::after {
   box-sizing: border-box;
 }
+:root {
+  --s: 1080px;
+}
 body {
   margin: 0;
   padding: 0;
@@ -21,10 +24,8 @@ body {
   width: 100%;
   height: 100%;
 }
-#left-menu {
+.menu {
   position: absolute;
-  left: 0;
-  top: 0;
   padding: 1.5rem;
   z-index: 10;
   height: 100%;
@@ -32,10 +33,28 @@ body {
   max-width: 23rem;
   min-width: 21rem;
   display: grid;
-  grid-template-rows: 1fr 4fr;
   row-gap: 1.5rem;
-  background-color: rgba(0, 255, 60, 0);
+  background-color: rgba(0, 0, 0, 0);
+}
+@media (max-width: 1080px) {
+  .menu {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+  }
+}
+#left-menu {
+  left: 0;
+  top: 0;
+  grid-template-rows: 1fr 4fr;
   opacity: 1;
+  pointer-events: all;
+}
+@media (max-width: 1080px) {
+  #left-menu {
+    opacity: 0;
+    pointer-events: none;
+  }
 }
 .left-menu__title {
   width: 100%;
@@ -61,6 +80,11 @@ body {
   backdrop-filter: blur(5px);
   overflow: hidden;
 }
+@media (max-width: 1080px) {
+  #left-menu__description-container {
+    opacity: 1;
+  }
+}
 #left-menu__description {
   width: 100%;
   height: 100%;
@@ -75,26 +99,17 @@ body {
   top: 3rem;
 }
 #right-menu {
-  position: absolute;
   right: 0;
   top: 0;
-  padding: 1.5rem;
-  z-index: 10;
-  height: 100%;
-  width: 30%;
-  min-width: 21rem;
-  max-width: 23rem;
-  display: grid;
   grid-template-rows: 9fr 1fr;
-  row-gap: 1.5rem;
-  background-color: rgba(255, 0, 132, 0);
   opacity: 0;
   -wscreenebkit-transition: opacity 0.3s;
   transition: opacity 0.3s;
+  pointer-events: all;
 }
-@media (max-width: 768px) {
+@media (max-width: 1080px) {
   #right-menu {
-    grid-template-rows: 13fr 1fr;
+    pointer-events: none;
   }
 }
 #right-menu__top {
@@ -145,7 +160,7 @@ body {
   background-color: rgba(6, 212, 37, 0);
   flex-wrap: wrap;
 }
-@media (max-width: 768px) {
+@media (max-width: 1080px) {
   .right-menu__top__buttons-container {
     justify-content: space-between;
   }
@@ -216,7 +231,7 @@ body {
   border: none;
   backdrop-filter: blur(5px);
 }
-@media (max-width: 768px) {
+@media (max-width: 1080px) {
   #full-image-container {
     width: 100%;
     height: 100%;
@@ -285,8 +300,9 @@ body {
   height: 8rem;
   width: 4rem;
 }
-@media (max-width: 768px) {
+@media (max-width: 1080px) {
   .menu-button {
+    z-index: 11;
     height: 6rem;
     width: 3rem;
   }
@@ -304,7 +320,7 @@ body {
   height: 3rem;
   width: 6rem;
 }
-@media (max-width: 768px) {
+@media (max-width: 1080px) {
   .menu-button--bottom {
     height: 2.5rem;
     width: 5rem;
@@ -350,7 +366,7 @@ body {
   letter-spacing: 1%;
   font-size: 2.5rem;
 }
-@media (max-width: 768px) {
+@media (max-width: 1080px) {
   .title-font {
     font-size: 2.2rem;
   }
@@ -364,7 +380,7 @@ body {
   font-size: 1.5rem;
   color: #ffffff;
 }
-@media (max-width: 768px) {
+@media (max-width: 1080px) {
   .main-font {
     font-size: 1.1rem;
   }
@@ -372,7 +388,7 @@ body {
 .large-font {
   font-size: 2rem;
 }
-@media (max-width: 768px) {
+@media (max-width: 1080px) {
   .large-font {
     font-size: 1.6rem;
   }
@@ -380,7 +396,7 @@ body {
 .medium-font {
   font-size: 1.4rem;
 }
-@media (max-width: 768px) {
+@media (max-width: 1080px) {
   .medium-font {
     font-size: 1rem;
   }
@@ -388,7 +404,7 @@ body {
 .small-font {
   font-size: 1.2rem;
 }
-@media (max-width: 768px) {
+@media (max-width: 1080px) {
   .small-font {
     font-size: 0.8rem;
   }
@@ -396,7 +412,7 @@ body {
 .right-menu-sections-font {
   font-size: 1.2rem;
 }
-@media (max-width: 768px) {
+@media (max-width: 1080px) {
   .right-menu-sections-font {
     font-size: 1rem;
   }
@@ -423,6 +439,13 @@ body {
   display: grid;
   grid-template-rows: 4rem 1fr 3rem;
   grid-row-gap: 2rem;
+}
+@media (max-width: 1080px) {
+  #costume-form {
+    width: 100%;
+    height: 100%;
+    border-radius: 0px;
+  }
 }
 #form__title {
   width: 100%;
@@ -562,7 +585,7 @@ body {
   overflow-y: scroll;
   scrollbar-width: none;
 }
-@media (max-width: 768px) {
+@media (max-width: 1080px) {
   #about-container {
     width: 100%;
     height: 100%;
@@ -591,7 +614,7 @@ a:hover {
   background-color: rgb(57, 111, 47);
   padding: 2rem;
 }
-@media (max-width: 768px) {
+@media (max-width: 1080px) {
   .screen--tutorial {
     padding: 0px;
   }
@@ -607,7 +630,7 @@ a:hover {
   flex-direction: column;
   row-gap: 1.5rem;
 }
-@media (max-width: 768px) {
+@media (max-width: 1080px) {
   #tutorial-window {
     width: 100%;
     height: 100%;
@@ -620,7 +643,7 @@ a:hover {
   grid-template-columns: 2fr 5fr;
   column-gap: 2rem;
 }
-@media (max-width: 768px) {
+@media (max-width: 1080px) {
   #tutorial-content {
     grid-template-columns: 1fr;
     grid-template-rows: 1fr 1fr;
@@ -645,7 +668,7 @@ a:hover {
   height: fit-content;
   font-size: 2rem;
 }
-@media (max-width: 768px) {
+@media (max-width: 1080px) {
   #tutorial__title {
     padding-top: 0px;
   }
@@ -694,7 +717,7 @@ a:hover {
   border: none;
   background-color: rgba(0, 0, 0, 0.3);
 }
-@media (max-width: 768px) {
+@media (max-width: 1080px) {
   .tutorial__button {
     width: 5rem;
     height: 2.5rem;
@@ -708,7 +731,7 @@ a:hover {
   background-color: rgb(37, 72, 31);
   color: red;
 }
-@media (max-width: 768px) {
+@media (max-width: 1080px) {
   #tutorial-exit {
     right: 0.5rem;
     top: 0.5rem;

@@ -116,5 +116,18 @@
         "path": "/images/9a491578-26be-44de-9702-6e7ca68de23e-IMG_5681.jpg"
       }
     ]
+  },
+  {
+    "costumeID": "7276cb08-c583-4382-97ba-188a33f8e125",
+    "name": "b",
+    "description": "b",
+    "parts": [
+      {
+        "partID": "part_7276cb08-c583-4382-97ba-188a33f8e125_0",
+        "name": "b",
+        "path": "/models/b39ed8f8-6ec5-4dbe-a4c7-da5003ccd8dd-klobuk.glb"
+      }
+    ],
+    "images": []
   }
 ]

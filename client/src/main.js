@@ -16,17 +16,21 @@ const RENDERER = new THREE.WebGLRenderer({
   canvas,
   alpha: false,
 });
-var width = canvas.clientWidth;
-var height = canvas.clientHeight;
+let width = canvas.clientWidth;
+let height = canvas.clientHeight;
 const SCREEN = document.getElementById("screen");
 const CAMERA = new THREE.PerspectiveCamera(65, width / height, 0.01, 100);
 const SCENE = new THREE.Scene();
 const GLTF_LOADER = new GLTFLoader();
 const COSTUME_UPLOAD_FORM = document.forms.costumeUploadForm;
-var newLoadedCostumes = new Array(); // [{costume, partMeshes[]}]
-var activeParts = new Array();
-var newActiveCostume; // NewLoadedCostume
-var rightMenuSelected = 0;
+let loadedCostumes = new Array(); // [{costume, partMeshes[]}]
+let activeParts = new Array();
+let activeCostume; // LoadedCostume
+let rightMenuSelected = 0;
+
+let closeLeft, closeRight;
+let closeRightMenuOnContribute = false;
+let prevResolutionIsSmall = false;
 
 setupRenderer();
 setAboutButtons();
@@ -36,9 +40,12 @@ const CONTROLS = new OrbitControls(CAMERA, RENDERER.domElement);
 setupControls();
 setupFlatColorBG();
 setupRightMenuTopButtons();
-adaptToScreenResolution();
+adaptToScreenResolution(true);
 setupForm();
 resetForm();
+window.onresize = () => {
+  adaptToScreenResolution();
+};
 animate();
 
 // place first costume
@@ -59,12 +66,7 @@ function Part(name, path) {
   this.path = path;
 }
 
-function LoadedCostume(costumeID, partMeshes) {
-  this.costumeID = costumeID;
-  this.partMeshes = partMeshes;
-}
-
-function NewLoadedCostume(costume, partMeshes) {
+function LoadedCostume(costume, partMeshes) {
   this.costume = costume;
   this.partMeshes = partMeshes;
 }
@@ -152,10 +154,10 @@ function setupRightMenuTopButtons() {
   let rightMenuList = document.getElementById("right-menu__top__content");
 
   document.getElementById("images-button").onclick = () => {
-    displayImagesInRightMenu(rightMenuList, newActiveCostume.costume);
+    displayImagesInRightMenu(rightMenuList, activeCostume.costume);
   };
   document.getElementById("parts-button").onclick = () => {
-    displayPartToggles(rightMenuList, newActiveCostume.costume);
+    displayPartToggles(rightMenuList, activeCostume.costume);
   };
   document.getElementById("costumes-button").onclick = () => {
     displayModelSelectButtons(rightMenuList, GLTF_LOADER);
@@ -196,22 +198,21 @@ async function replaceRenderedCostume(loader, costume) {
   let newCostumeID = costume.costumeID;
 
   if (
-    newActiveCostume &&
-    (!newActiveCostume.costume ||
-      newCostumeID != newActiveCostume.costume.costumeID)
+    activeCostume &&
+    (!activeCostume.costume || newCostumeID != activeCostume.costume.costumeID)
   ) {
-    removeCostumeFromScene(newActiveCostume, activeParts);
+    removeCostumeFromScene(activeCostume, activeParts);
   }
 
   if (
-    newLoadedCostumes.length == 0 ||
-    !newActiveCostume ||
-    !newActiveCostume.costume ||
-    newCostumeID != newActiveCostume.costume.costumeID
+    loadedCostumes.length == 0 ||
+    !activeCostume ||
+    !activeCostume.costume ||
+    newCostumeID != activeCostume.costume.costumeID
   ) {
     let costumeToPlace;
     if (
-      !newLoadedCostumes.some(
+      !loadedCostumes.some(
         (e) => e.costume && e.costume.costumeID === newCostumeID,
       )
     ) {
@@ -221,21 +222,21 @@ async function replaceRenderedCostume(loader, costume) {
       let loadedCostume = await loadCostumeFromDB(loader, costume);
       loadingIcon.remove();
 
-      if (newLoadedCostumes.length >= MAX_LOADED) {
-        disposeOldestCostumeFromMemory(newLoadedCostumes);
+      if (loadedCostumes.length >= MAX_LOADED) {
+        disposeOldestCostumeFromMemory(loadedCostumes);
       }
 
-      newLoadedCostumes.push(loadedCostume);
+      loadedCostumes.push(loadedCostume);
       costumeToPlace = loadedCostume;
       console.log("Costume " + newCostumeID + " successfully loaded");
     } else {
-      costumeToPlace = newLoadedCostumes.find(
+      costumeToPlace = loadedCostumes.find(
         (e) => e.costume.costumeID === newCostumeID,
       );
     }
     placeCostumeToScene(costumeToPlace);
     activeParts = new Array(costumeToPlace.partMeshes.length).fill(true);
-    newActiveCostume = costumeToPlace;
+    activeCostume = costumeToPlace;
   }
 
   updateMenusInfo(costume);
@@ -273,7 +274,7 @@ async function loadCostumeFromDB(loader, costume) {
 
     console.log("loaded " + costume.parts[i].name);
   }
-  return new NewLoadedCostume(costume, partMeshes);
+  return new LoadedCostume(costume, partMeshes);
 }
 
 function placeCostumeToScene(loadedCostume) {
@@ -336,17 +337,16 @@ function toggleCostumePart(partIndex, button) {
   }
 
   if (activeParts[partIndex]) {
-    SCENE.remove(newActiveCostume.partMeshes[partIndex].scene);
+    SCENE.remove(activeCostume.partMeshes[partIndex].scene);
     button.className = "part-toggle-button main-font";
   } else {
-    placeMeshToScene(newActiveCostume.partMeshes[partIndex]);
+    placeMeshToScene(activeCostume.partMeshes[partIndex]);
     button.className = "part-toggle-button main-font green";
   }
   activeParts[partIndex] = !activeParts[partIndex];
 }
 
-// loads images relevant for the costume and displays in the right menu
-function loadImageFromDB(src, alt, imageName, imagesContainer, imageIndex) {
+function loadImageFromDB(src, alt, imageName, imageIndex) {
   let img = document.createElement("img");
   img.src = src;
   img.alt = alt;
@@ -354,7 +354,7 @@ function loadImageFromDB(src, alt, imageName, imagesContainer, imageIndex) {
     showFullscreenImage(img, imageName, imageIndex);
   };
 
-  imagesContainer.appendChild(img);
+  return img;
 }
 
 function showFullscreenImage(img, imageName, imageIndex) {
@@ -369,27 +369,27 @@ function showFullscreenImage(img, imageName, imageIndex) {
   prev.onclick = () => {
     showFullscreenImage(
       document.getElementById("right-menu__top__content").children[
-        (imageIndex - 1 + newActiveCostume.costume.images.length) %
-          newActiveCostume.costume.images.length
+        (imageIndex - 1 + activeCostume.costume.images.length) %
+          activeCostume.costume.images.length
       ],
-      newActiveCostume.costume.images[
-        (imageIndex - 1 + newActiveCostume.costume.images.length) %
-          newActiveCostume.costume.images.length
+      activeCostume.costume.images[
+        (imageIndex - 1 + activeCostume.costume.images.length) %
+          activeCostume.costume.images.length
       ].name,
-      (imageIndex - 1 + newActiveCostume.costume.images.length) %
-        newActiveCostume.costume.images.length,
+      (imageIndex - 1 + activeCostume.costume.images.length) %
+        activeCostume.costume.images.length,
     );
   };
 
   next.onclick = (event) => {
     showFullscreenImage(
       document.getElementById("right-menu__top__content").children[
-        (imageIndex + 1) % newActiveCostume.costume.images.length
+        (imageIndex + 1) % activeCostume.costume.images.length
       ],
-      newActiveCostume.costume.images[
-        (imageIndex + 1) % newActiveCostume.costume.images.length
+      activeCostume.costume.images[
+        (imageIndex + 1) % activeCostume.costume.images.length
       ].name,
-      (imageIndex + 1) % newActiveCostume.costume.images.length,
+      (imageIndex + 1) % activeCostume.costume.images.length,
     );
   };
 
@@ -443,7 +443,7 @@ function modifyFullImageContainer(imageIndex) {
   let name = document.getElementById("full-image-container__name");
   let fullImage = document.getElementById("full-image-container__image");
 
-  fullImage.src = newActiveCostume.costume.images[imageIndex].path;
+  fullImage.src = activeCostume.costume.images[imageIndex].path;
 
   return {
     next: next,
@@ -516,13 +516,14 @@ function displayImagesInRightMenu(rightMenuList, activeCostume) {
   rightMenuList.innerHTML = "";
 
   for (let i = 0; i < activeCostume.images.length; i++) {
-    loadImageFromDB(
+    let img = loadImageFromDB(
       BASE_URL + activeCostume.images[i].path,
       "Image Missing",
       activeCostume.images[i].name,
-      rightMenuList,
       i,
     );
+
+    rightMenuList.appendChild(img);
   }
 }
 
@@ -681,7 +682,7 @@ async function loadCostumePreviewFromForm(loader, parts) {
 
     partMeshes.push(part);
   }
-  return new NewLoadedCostume(null, partMeshes);
+  return new LoadedCostume(null, partMeshes);
 }
 
 async function previewFormModel() {
@@ -693,19 +694,19 @@ async function previewFormModel() {
 
   let loading = displayLoadingIcon();
 
-  if (newActiveCostume) {
-    removeCostumeFromScene(newActiveCostume, activeParts);
+  if (activeCostume) {
+    removeCostumeFromScene(activeCostume, activeParts);
   }
 
   let loadedCostume = await loadCostumePreviewFromForm(GLTF_LOADER, parts);
 
-  if (newLoadedCostumes.length >= MAX_LOADED) {
-    disposeOldestCostumeFromMemory(newLoadedCostumes);
+  if (loadedCostumes.length >= MAX_LOADED) {
+    disposeOldestCostumeFromMemory(loadedCostumes);
   }
 
-  newLoadedCostumes.push(loadedCostume);
+  loadedCostumes.push(loadedCostume);
   placeCostumeToScene(loadedCostume);
-  newActiveCostume = loadedCostume;
+  activeCostume = loadedCostume;
 
   activeParts = new Array(loadedCostume.partMeshes.length).fill(true);
 
@@ -729,36 +730,19 @@ function resetForm() {
   COSTUME_UPLOAD_FORM.reset();
 }
 
-async function submitForm(e) {
-  e.preventDefault();
-
+async function submitForm(form) {
+  form.preventDefault();
   hideElem(COSTUME_UPLOAD_FORM);
-
   let loadingIcon = displayLoadingIcon();
-
   let successContainer = document.createElement("div");
   successContainer.className = "success-container";
-
   let success = document.createElement("div");
   success.className = "main-font large-font success";
-
   successContainer.appendChild(success);
-
-  // check size
-  const PART_FILES = e.target.elements["partFiles"].files;
-  const IMAGES = e.target.elements["images"].files;
-  let fileSize = 0;
-
-  for (let i = 0; i < PART_FILES.length; i++) {
-    fileSize += PART_FILES[i].size / 1024 / 1024;
-  }
-  for (let i = 0; i < IMAGES.length; i++) {
-    fileSize += IMAGES[i].size / 1024 / 1024;
-  }
+  let fileSize = checkSubmitSize(form);
 
   if (fileSize > TOTAL_FILE_LIMIT) {
     loadingIcon.remove();
-
     success.textContent = `Dosažen limit souborů (${TOTAL_FILE_LIMIT}MB)`;
     success.style.color = "#ff2a00";
     document.getElementById("screen").appendChild(successContainer);
@@ -769,7 +753,7 @@ async function submitForm(e) {
 
     return -1;
   } else {
-    const FORM_DATA = new FormData(e.target);
+    const FORM_DATA = new FormData(form.target);
 
     const RES = await fetch(BASE_URL + "/api/uploadObject", {
       method: "POST",
@@ -777,13 +761,11 @@ async function submitForm(e) {
     });
 
     const DATA = await RES.json();
-
     loadingIcon.remove();
 
     // multer error
     if (!RES.ok) {
       console.error(DATA.error);
-
       success.textContent = `Dosažen limit souborů (${TOTAL_FILE_LIMIT}MB)`;
       success.style.color = "#ff2a00";
       document.getElementById("screen").appendChild(successContainer);
@@ -809,120 +791,143 @@ async function submitForm(e) {
   }
 }
 
-function adaptToScreenResolution() {
-  if (IS_TOUCH || window.innerWidth < 768) {
-    let leftMenu = document.getElementById("left-menu");
-    let leftMenuButton = document.getElementById("left-menu__button");
-    let rightMenu = document.getElementById("right-menu");
-    let rightMenuButton = document.getElementById("right-menu__button");
-    let form = document.getElementById("costume-form");
-    let rightMenuButtons = document.getElementsByClassName(
-      "right-menu__top__buttons-container",
-    )[0];
+function checkSubmitSize(form) {
+  const PART_FILES = form.target.elements["partFiles"].files;
+  const IMAGES = form.target.elements["images"].files;
+  let fileSize = 0;
 
-    // set menus fullscreen
-    leftMenu.style.width = "100%";
-    rightMenu.style.width = "100%";
-    leftMenu.style.height = "100%";
-    rightMenu.style.height = "100%";
-    leftMenu.style.maxWidth = "none";
-    rightMenu.style.maxWidth = "none";
+  for (let i = 0; i < PART_FILES.length; i++) {
+    fileSize += PART_FILES[i].size / 1024 / 1024;
+  }
+  for (let i = 0; i < IMAGES.length; i++) {
+    fileSize += IMAGES[i].size / 1024 / 1024;
+  }
 
-    form.style.width = "100%";
-    form.style.height = "100%";
-    form.style.borderRadius = "0px";
+  return fileSize;
+}
 
-    rightMenuButton.className =
-      "menu-button right-button menu-button--bottom main-font";
-    leftMenuButton.className =
-      "menu-button left-button menu-button--bottom main-font";
+function closeRightMenu() {
+  let rightMenu = document.getElementById("right-menu");
+  showHide("right-menu__button", "right-menu");
+  rightMenu.style.zIndex = 10;
+  document.getElementById("left-menu__button").style.opacity = 1;
+  rightMenu.style.pointerEvents = "none";
+}
 
-    // setup close button funcitonality
-    let closeLeft = createCloseButton("18px");
-    closeLeft.onclick = () => {
-      showHide("left-menu__button", "left-menu");
-      leftMenu.style.zIndex = 10;
-      rightMenuButton.style.opacity = 1;
-      leftMenu.style.pointerEvents = "none";
-    };
-    leftMenu.appendChild(closeLeft);
+function adaptToScreenResolution(force = false) {
+  let leftMenu = document.getElementById("left-menu");
+  let leftMenuButton = document.getElementById("left-menu__button");
+  let rightMenu = document.getElementById("right-menu");
+  let rightMenuButton = document.getElementById("right-menu__button");
+  let form = document.getElementById("costume-form");
+  let rightMenuButtons = document.getElementsByClassName(
+    "right-menu__top__buttons-container",
+  )[0];
+  let leftMenuDescriptionContainer = document.getElementById(
+    "left-menu__description-container",
+  );
 
-    let closeRight = createCloseButton("18px");
-    closeRight.onclick = () => {
-      closeRightMenu();
-    };
-    rightMenuButtons.appendChild(closeRight);
+  if (IS_TOUCH || window.innerWidth < 1080) {
+    if (!prevResolutionIsSmall) {
+      console.log("changing to small");
+      prevResolutionIsSmall = true;
 
-    function closeRightMenu() {
-      showHide("right-menu__button", "right-menu");
-      rightMenu.style.zIndex = 10;
-      leftMenuButton.style.opacity = 1;
-      rightMenu.style.pointerEvents = "none";
-    }
+      if (!closeLeft) {
+        closeLeft = createCloseButton("18px");
+        closeLeft.onclick = () => {
+          showHide("left-menu__button", "left-menu");
+          leftMenu.style.zIndex = 10;
+          rightMenuButton.style.opacity = 1;
+          leftMenu.style.pointerEvents = "none";
+        };
+        leftMenu.appendChild(closeLeft);
+      }
 
-    document.getElementById("contribute").addEventListener(
-      "click",
-      () => {
-        closeRightMenu();
-      },
-      false,
-    );
+      if (!closeRight) {
+        closeRight = createCloseButton("18px");
+        closeRight.onclick = () => {
+          closeRightMenu();
+        };
+        rightMenuButtons.appendChild(closeRight);
+      }
 
-    // hides costume name into left menu and sets up menu buttons for fouch
-    document.getElementById("left-menu__description-container").style.opacity =
-      1;
-    leftMenu.style.opacity = 0;
-    leftMenu.style.pointerEvents = "none";
-    leftMenuButton.style.zIndex = 11;
-    leftMenuButton.onclick = () => {
-      showHide("left-menu", "left-menu__button");
-      leftMenu.style.pointerEvents = "all";
-      leftMenu.style.zIndex = 12;
-      rightMenuButton.style.opacity = 0;
-    };
+      if (!closeRightMenuOnContribute) {
+        document
+          .getElementById("contribute")
+          .addEventListener("click", closeRightMenu);
+        closeRightMenuOnContribute = true;
+      }
 
-    rightMenu.style.pointerEvents = "none";
-    rightMenuButton.style.zIndex = 11;
-    rightMenuButton.onclick = () => {
-      showHide("right-menu", "right-menu__button");
-      rightMenu.style.pointerEvents = "all";
-      rightMenu.style.zIndex = 12;
-      leftMenuButton.style.opacity = 0;
-    };
-  } else {
-    document.getElementById("right-menu").addEventListener(
-      "mouseover",
-      (event) => {
+      leftMenuButton.onclick = () => {
+        showHide("left-menu", "left-menu__button");
+        leftMenu.style.pointerEvents = "all";
+        leftMenu.style.zIndex = 12;
+        rightMenuButton.style.opacity = 0;
+      };
+
+      rightMenuButton.onclick = () => {
         showHide("right-menu", "right-menu__button");
-      },
-      false,
-    );
-    document.getElementById("right-menu").addEventListener(
-      "mouseout",
-      (event) => {
-        showHide("right-menu__button", "right-menu");
-      },
-      false,
-    );
+        rightMenu.style.pointerEvents = "all";
+        rightMenu.style.zIndex = 12;
+        leftMenuButton.style.opacity = 0;
+      };
 
-    document
-      .getElementById("left-menu__description-container")
-      .addEventListener(
-        "mouseover",
-        (event) => {
-          showHide("left-menu__description-container", "left-menu__button");
-        },
-        false,
-      );
-    document
-      .getElementById("left-menu__description-container")
-      .addEventListener(
-        "mouseout",
-        (event) => {
-          showHide("left-menu__button", "left-menu__description-container");
-        },
-        false,
-      );
+      rightMenu.onmouseover = null;
+      rightMenu.onmouseout = null;
+      leftMenuDescriptionContainer.onmouseover = null;
+      leftMenuDescriptionContainer.onmouseout = null;
+      document.getElementById(
+        "left-menu__description-container",
+      ).style.opacity = 1;
+      showElem(rightMenuButton);
+      showElem(leftMenuButton);
+      hideElem(leftMenu);
+      hideElem(rightMenu);
+    }
+  } else {
+    if (prevResolutionIsSmall || force) {
+      console.log("changing to large");
+      prevResolutionIsSmall = false;
+
+      if (closeLeft) {
+        leftMenu.removeChild(closeLeft);
+        closeLeft = null;
+      }
+      if (closeRight) {
+        rightMenuButtons.removeChild(closeRight);
+        closeRight = null;
+      }
+
+      if (closeRightMenuOnContribute) {
+        document
+          .getElementById("contribute")
+          .removeEventListener("click", closeRightMenu);
+        closeRightMenuOnContribute = false;
+      }
+
+      leftMenuButton.onclick = null;
+      rightMenuButton.onclick = null;
+      rightMenu.onmouseover = () => {
+        showHide("right-menu", "right-menu__button");
+      };
+      rightMenu.onmouseout = () => {
+        showHide("right-menu__button", "right-menu");
+      };
+      rightMenu.style.pointerEvents = "all";
+
+      leftMenuDescriptionContainer.onmouseover = () => {
+        showHide("left-menu__description-container", "left-menu__button");
+      };
+      leftMenuDescriptionContainer.onmouseout = () => {
+        showHide("left-menu__button", "left-menu__description-container");
+      };
+      leftMenuDescriptionContainer.style.opacity = 0;
+      showElem(leftMenuButton);
+      showElem(rightMenuButton);
+      showElem(leftMenu);
+      rightMenu.style.pointerEvents = "all";
+      rightMenu.style.opacity = 0;
+    }
   }
 }
 
