@@ -7,7 +7,7 @@ import { TextureLoader } from "three";
 const BASE_URL = "";
 const Y_OFFSET = -1;
 const TOTAL_FILE_LIMIT = 150;
-const COSTUMES = await (await fetch(BASE_URL + "/api/models")).json();
+const COSTUMES = await (await fetch(BASE_URL + "/api/models")).json(); // array of Costume
 const IS_TOUCH = window.matchMedia("(pointer: coarse)").matches;
 const MAX_LOADED = IS_TOUCH ? 1 : 3;
 const canvas = document.getElementById("model-canvas");
@@ -23,11 +23,9 @@ const CAMERA = new THREE.PerspectiveCamera(65, width / height, 0.01, 100);
 const SCENE = new THREE.Scene();
 const GLTF_LOADER = new GLTFLoader();
 const COSTUME_UPLOAD_FORM = document.forms.costumeUploadForm;
-var loadedCostumes = new Array(); // [{id, partMeshes[]}]
-var activeCostumeIndex = -1;
-var activeCostumeID = -1;
-var activeCostume;
+var newLoadedCostumes = new Array(); // [{costume, partMeshes[]}]
 var activeParts = new Array();
+var newActiveCostume; // NewLoadedCostume
 var rightMenuSelected = 0;
 
 setupRenderer();
@@ -48,7 +46,8 @@ if (COSTUMES.length > 0) {
   await replaceRenderedCostume(GLTF_LOADER, COSTUMES[0]);
 }
 
-function Costume(name, description, parts, images) {
+function Costume(costumeID, name, description, parts, images) {
+  this.costumeID = costumeID;
   this.name = name;
   this.description = description;
   this.parts = parts;
@@ -62,6 +61,11 @@ function Part(name, path) {
 
 function LoadedCostume(costumeID, partMeshes) {
   this.costumeID = costumeID;
+  this.partMeshes = partMeshes;
+}
+
+function NewLoadedCostume(costume, partMeshes) {
+  this.costume = costume;
   this.partMeshes = partMeshes;
 }
 
@@ -148,10 +152,10 @@ function setupRightMenuTopButtons() {
   let rightMenuList = document.getElementById("right-menu__top__content");
 
   document.getElementById("images-button").onclick = () => {
-    displayImagesInRightMenu(rightMenuList, activeCostume);
+    displayImagesInRightMenu(rightMenuList, newActiveCostume.costume);
   };
   document.getElementById("parts-button").onclick = () => {
-    displayPartToggles(rightMenuList, activeCostume);
+    displayPartToggles(rightMenuList, newActiveCostume.costume);
   };
   document.getElementById("costumes-button").onclick = () => {
     displayModelSelectButtons(rightMenuList, GLTF_LOADER);
@@ -187,36 +191,51 @@ function setupForm() {
 }
 
 async function replaceRenderedCostume(loader, costume) {
-  let costumeID = costume.costumeID;
+  console.log("Replacing to " + costume.costumeID);
 
-  if (activeCostumeID != -1 && costumeID != activeCostumeID) {
-    removeCostumeFromScene(getLoadedCostumeIndex(activeCostumeID), activeParts);
+  let newCostumeID = costume.costumeID;
+
+  if (
+    newActiveCostume &&
+    (!newActiveCostume.costume ||
+      newCostumeID != newActiveCostume.costume.costumeID)
+  ) {
+    removeCostumeFromScene(newActiveCostume, activeParts);
   }
 
-  if (costumeID != activeCostumeID) {
-    let newCostumeIndex = getLoadedCostumeIndex(costumeID);
-    if (newCostumeIndex == -1) {
-      console.log("Costume " + costumeID + " not loaded, trying to load.");
+  if (
+    newLoadedCostumes.length == 0 ||
+    !newActiveCostume ||
+    !newActiveCostume.costume ||
+    newCostumeID != newActiveCostume.costume.costumeID
+  ) {
+    let costumeToPlace;
+    if (
+      !newLoadedCostumes.some(
+        (e) => e.costume && e.costume.costumeID === newCostumeID,
+      )
+    ) {
+      console.log("Costume " + newCostumeID + " not loaded, trying to load.");
 
       let loadingIcon = displayLoadingIcon();
       let loadedCostume = await loadCostumeFromDB(loader, costume);
       loadingIcon.remove();
 
-      if (loadedCostumes.length >= MAX_LOADED) {
-        disposeOldestCostumeFromMemory(loadedCostumes);
+      if (newLoadedCostumes.length >= MAX_LOADED) {
+        disposeOldestCostumeFromMemory(newLoadedCostumes);
       }
 
-      loadedCostumes.push(loadedCostume);
-      newCostumeIndex = loadedCostumes.length - 1;
-      console.log("Costume " + costumeID + " successfully loaded");
+      newLoadedCostumes.push(loadedCostume);
+      costumeToPlace = loadedCostume;
+      console.log("Costume " + newCostumeID + " successfully loaded");
+    } else {
+      costumeToPlace = newLoadedCostumes.find(
+        (e) => e.costume.costumeID === newCostumeID,
+      );
     }
-
-    placeCostumeToScene(loadedCostumes[newCostumeIndex]);
-    activeParts = new Array(
-      loadedCostumes[newCostumeIndex].partMeshes.length,
-    ).fill(true);
-    activeCostume = costume;
-    activeCostumeID = activeCostume.costumeID;
+    placeCostumeToScene(costumeToPlace);
+    activeParts = new Array(costumeToPlace.partMeshes.length).fill(true);
+    newActiveCostume = costumeToPlace;
   }
 
   updateMenusInfo(costume);
@@ -254,7 +273,7 @@ async function loadCostumeFromDB(loader, costume) {
 
     console.log("loaded " + costume.parts[i].name);
   }
-  return new LoadedCostume(costume.costumeID, partMeshes);
+  return new NewLoadedCostume(costume, partMeshes);
 }
 
 function placeCostumeToScene(loadedCostume) {
@@ -268,20 +287,18 @@ function placeMeshToScene(mesh) {
   SCENE.add(mesh.scene);
 }
 
-function removeCostumeFromScene(activeCostumeIndex, activeParts) {
-  if (
-    activeParts.length != loadedCostumes[activeCostumeIndex].partMeshes.length
-  ) {
+function removeCostumeFromScene(loadedCostumeToRemove, activeParts) {
+  if (activeParts.length != loadedCostumeToRemove.partMeshes.length) {
     console.log(
       "activeParts is different length than partMeshes " +
         activeParts.length +
         "," +
-        loadedCostumes[activeCostumeIndex].partMeshes.length,
+        loadedCostumeToRemove.partMeshes.length,
     );
   } else {
     for (let j = 0; j < activeParts.length; j++) {
-      if (activeParts[j] == true) {
-        SCENE.remove(loadedCostumes[activeCostumeIndex].partMeshes[j].scene);
+      if (activeParts[j]) {
+        SCENE.remove(loadedCostumeToRemove.partMeshes[j].scene);
       }
     }
   }
@@ -318,14 +335,11 @@ function toggleCostumePart(partIndex, button) {
     return -1;
   }
 
-  let activeCostumeIndex = getLoadedCostumeIndex(activeCostumeID);
   if (activeParts[partIndex]) {
-    SCENE.remove(
-      loadedCostumes[activeCostumeIndex].partMeshes[partIndex].scene,
-    );
+    SCENE.remove(newActiveCostume.partMeshes[partIndex].scene);
     button.className = "part-toggle-button main-font";
   } else {
-    placeMeshToScene(loadedCostumes[activeCostumeIndex].partMeshes[partIndex]);
+    placeMeshToScene(newActiveCostume.partMeshes[partIndex]);
     button.className = "part-toggle-button main-font green";
   }
   activeParts[partIndex] = !activeParts[partIndex];
@@ -355,25 +369,27 @@ function showFullscreenImage(img, imageName, imageIndex) {
   prev.onclick = () => {
     showFullscreenImage(
       document.getElementById("right-menu__top__content").children[
-        (imageIndex - 1 + activeCostume.images.length) %
-          activeCostume.images.length
+        (imageIndex - 1 + newActiveCostume.costume.images.length) %
+          newActiveCostume.costume.images.length
       ],
-      activeCostume.images[
-        (imageIndex - 1 + activeCostume.images.length) %
-          activeCostume.images.length
+      newActiveCostume.costume.images[
+        (imageIndex - 1 + newActiveCostume.costume.images.length) %
+          newActiveCostume.costume.images.length
       ].name,
-      (imageIndex - 1 + activeCostume.images.length) %
-        activeCostume.images.length,
+      (imageIndex - 1 + newActiveCostume.costume.images.length) %
+        newActiveCostume.costume.images.length,
     );
   };
 
   next.onclick = (event) => {
     showFullscreenImage(
       document.getElementById("right-menu__top__content").children[
-        (imageIndex + 1) % activeCostume.images.length
+        (imageIndex + 1) % newActiveCostume.costume.images.length
       ],
-      activeCostume.images[(imageIndex + 1) % activeCostume.images.length].name,
-      (imageIndex + 1) % activeCostume.images.length,
+      newActiveCostume.costume.images[
+        (imageIndex + 1) % newActiveCostume.costume.images.length
+      ].name,
+      (imageIndex + 1) % newActiveCostume.costume.images.length,
     );
   };
 
@@ -427,7 +443,7 @@ function modifyFullImageContainer(imageIndex) {
   let name = document.getElementById("full-image-container__name");
   let fullImage = document.getElementById("full-image-container__image");
 
-  fullImage.src = activeCostume.images[imageIndex].path;
+  fullImage.src = newActiveCostume.costume.images[imageIndex].path;
 
   return {
     next: next,
@@ -520,7 +536,7 @@ function displayPartToggles(togglesContainer, activeCostume) {
     "main-font right-menu-sections-font";
   togglesContainer.innerHTML = "";
 
-  if (activeCostumeID == -2) {
+  if (!activeCostume) {
     for (let i = 0; i < activeParts.length; i++) {
       placePartToggle(i, togglesContainer);
     }
@@ -665,7 +681,7 @@ async function loadCostumePreviewFromForm(loader, parts) {
 
     partMeshes.push(part);
   }
-  return new LoadedCostume(-2, partMeshes);
+  return new NewLoadedCostume(null, partMeshes);
 }
 
 async function previewFormModel() {
@@ -677,24 +693,21 @@ async function previewFormModel() {
 
   let loading = displayLoadingIcon();
 
-  if (activeCostumeID != -1) {
-    removeCostumeFromScene(getLoadedCostumeIndex(activeCostumeID), activeParts);
+  if (newActiveCostume) {
+    removeCostumeFromScene(newActiveCostume, activeParts);
   }
 
   let loadedCostume = await loadCostumePreviewFromForm(GLTF_LOADER, parts);
 
-  if (loadedCostumes.length >= MAX_LOADED) {
-    disposeOldestCostumeFromMemory(loadedCostumes);
+  if (newLoadedCostumes.length >= MAX_LOADED) {
+    disposeOldestCostumeFromMemory(newLoadedCostumes);
   }
 
-  loadedCostumes.push(loadedCostume);
-  let newCostumeIndex = loadedCostumes.length - 1;
-  placeCostumeToScene(loadedCostumes[newCostumeIndex]);
+  newLoadedCostumes.push(loadedCostume);
+  placeCostumeToScene(loadedCostume);
+  newActiveCostume = loadedCostume;
 
-  activeParts = new Array(
-    loadedCostumes[newCostumeIndex].partMeshes.length,
-  ).fill(true);
-  activeCostumeID = -2;
+  activeParts = new Array(loadedCostume.partMeshes.length).fill(true);
 
   if (rightMenuSelected == 1) {
     displayPartToggles(
@@ -911,24 +924,6 @@ function adaptToScreenResolution() {
         false,
       );
   }
-}
-
-function getCostumeIndex(costumeID) {
-  for (let i = 0; i < COSTUMES.length; i++) {
-    if (COSTUMES[i].costumeID == costumeID) {
-      return i;
-    }
-  }
-  return -1;
-}
-
-function getLoadedCostumeIndex(costumeID) {
-  for (let i = 0; i < loadedCostumes.length; i++) {
-    if (loadedCostumes[i].costumeID == costumeID) {
-      return i;
-    }
-  }
-  return -1;
 }
 
 function displayLoadingIcon() {
