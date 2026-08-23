@@ -23,7 +23,6 @@ const TUTORIAL_DESCRIPTIONS = [
   "Každá část kroje musí být exportována zvlášť. Vybereme exportovanou část, pro export zvolíme .glb/.gltf a&nbsp;nastavení exportu ponecháme původní, kromě zaškrtnutí Limit to Selected Objects v&nbsp;záložce Include. Pro nahrání do databáze zvolíme jméno a&nbsp;popis kroje, vybereme nahrávané soubory GLB a&nbsp;obrázky ve formátu JPG nebo PNG. Každému z&nbsp;těchto souborů je následně třeba dosadit název části oblečení a&nbsp;u fotek název obsahu nebo i&nbsp;krátký popis. Před potvrzením nahrání je možno nahlédnout, jak bude výsledný model vypadat v&nbsp;aplikaci. Dále můžeme potvrdit nahrání, případně jej zrušit a&nbsp;provést úpravy. Po dokončení nahrávání, které může trvat i&nbsp;v&nbsp;řádu minut, je potřeba znovu načíst stránku pro zobrazení nového kroje.<br /><br />",
   "Pokud není možno použít RealityScan, doporučenou alternativou je KIRI Engine dostupný na mobilních telefonech nebo webu. Jedná se o cloudovou službu na rekonstrukci modelů. Proces je velmi přímočarý - po nahrání fotografií zvolíme parametry rekonstrukce: High Poly Count, 4K Texture Resolution, GLB File Format, případně můžeme vypnout Train AI a&nbsp;Visibility. Po dokončení je možné upravit velikost, ořez nebo texturu modelu. Model je dále možné upravit v&nbsp;3D programu. KIRI Engine nabzí verzi zdarma, která je limitována 150 fotografiemi, 4K texturou a&nbsp;250000 polygony.<br /><br />",
 ];
-
 const IMAGE_NAMES = [
   "setup.jpg",
   "scan_all.png",
@@ -35,8 +34,7 @@ const IMAGE_NAMES = [
   "upload_form.png",
   "KiriEngine.png",
 ];
-
-var currentPage = 0;
+let currentPage = 0;
 
 function setupWindow() {
   for (let i = 0; i < IMAGE_NAMES.length; i++) {
