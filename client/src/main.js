@@ -78,7 +78,6 @@ function Image(name, path) {
 
 function animate(t = 0) {
   requestAnimationFrame(animate);
-
   RENDERER.render(SCENE, CAMERA);
   CONTROLS.update();
 }
@@ -86,17 +85,14 @@ function animate(t = 0) {
 function setupRenderer() {
   RENDERER.setSize(width, height, false);
   RENDERER.outputColorSpace = THREE.SRGBColorSpace;
-
   SCREEN.appendChild(RENDERER.domElement);
   document.body.appendChild(SCREEN);
 
   window.addEventListener("resize", () => {
     width = canvas.clientWidth;
     height = canvas.clientHeight;
-
     CAMERA.aspect = width / height;
     CAMERA.updateProjectionMatrix();
-
     RENDERER.setSize(width, height, false);
   });
 }
@@ -105,10 +101,7 @@ function setupCamera() {
   CAMERA.position.x = 0;
   CAMERA.position.y = 0;
   CAMERA.position.z = 2;
-
-  document.getElementById("reset-camera").onclick = () => {
-    resetCamera();
-  };
+  document.getElementById("reset-camera").onclick = resetCamera;
 }
 
 function setupControls() {
@@ -119,12 +112,10 @@ function setupControls() {
 
 function setupFlatColorBG() {
   const SPHERE_GEOMETRY = new THREE.SphereGeometry(50, 64, 64);
-
   const SPHERE_MATERIAL = new THREE.MeshBasicMaterial({
     side: THREE.BackSide,
     color: new THREE.Color(10 / 255, 40 / 255, 7 / 255),
   });
-
   SCENE.add(new THREE.Mesh(SPHERE_GEOMETRY, SPHERE_MATERIAL));
 }
 
@@ -134,13 +125,11 @@ async function setupImageBG() {
   );
   SPHERE_TEXTURE.colorSpace = THREE.SRGBColorSpace;
   const SPHERE_GEOMETRY = new THREE.SphereGeometry(50, 64, 64);
-
   const SPHERE_MATERIAL = new THREE.MeshBasicMaterial({
     map: SPHERE_TEXTURE,
     side: THREE.BackSide,
     color: new THREE.Color(0.8, 0.8, 0.8),
   });
-
   const SKY_SPHERE = new THREE.Mesh(SPHERE_GEOMETRY, SPHERE_MATERIAL);
 
   // fix skysphere rotation
@@ -174,13 +163,8 @@ function setupForm() {
   );
   setupFormClose();
 
-  document.getElementById("preview").onclick = () => {
-    previewFormModel();
-  };
-  document.getElementById("reset-form").onclick = () => {
-    resetForm();
-  };
-
+  document.getElementById("preview").onclick = previewModelFromForm;
+  document.getElementById("reset-form").onclick = resetForm;
   document
     .getElementById("images")
     .addEventListener("change", generateImageNameInputGrid);
@@ -211,6 +195,7 @@ async function replaceRenderedCostume(loader, costume) {
     newCostumeID != activeCostume.costume.costumeID
   ) {
     let costumeToPlace;
+
     if (
       !loadedCostumes.some(
         (e) => e.costume && e.costume.costumeID === newCostumeID,
@@ -271,9 +256,9 @@ async function loadCostumeFromDB(loader, costume) {
     });
 
     partMeshes.push(part);
-
     console.log("loaded " + costume.parts[i].name);
   }
+
   return new LoadedCostume(costume, partMeshes);
 }
 
@@ -329,7 +314,6 @@ function setCostumeNameAndDescription(name, description) {
   document.getElementById("left-menu__description").textContent = description;
 }
 
-// show or hide a part of the costume and update its button
 function toggleCostumePart(partIndex, button) {
   if (partIndex >= activeParts.length) {
     console.log("partIndex out of range");
@@ -366,30 +350,27 @@ function showFullscreenImage(img, imageName, imageIndex) {
     ({ next, prev, name } = modifyFullImageContainer(imageIndex));
   }
 
+  const IMAGES_LENGTH = activeCostume.costume.images.length;
+
   prev.onclick = () => {
     showFullscreenImage(
       document.getElementById("right-menu__top__content").children[
-        (imageIndex - 1 + activeCostume.costume.images.length) %
-          activeCostume.costume.images.length
+        (imageIndex - 1 + IMAGES_LENGTH) % IMAGES_LENGTH
       ],
       activeCostume.costume.images[
-        (imageIndex - 1 + activeCostume.costume.images.length) %
-          activeCostume.costume.images.length
+        (imageIndex - 1 + IMAGES_LENGTH) % IMAGES_LENGTH
       ].name,
-      (imageIndex - 1 + activeCostume.costume.images.length) %
-        activeCostume.costume.images.length,
+      (imageIndex - 1 + IMAGES_LENGTH) % IMAGES_LENGTH,
     );
   };
 
-  next.onclick = (event) => {
+  next.onclick = () => {
     showFullscreenImage(
       document.getElementById("right-menu__top__content").children[
-        (imageIndex + 1) % activeCostume.costume.images.length
+        (imageIndex + 1) % IMAGES_LENGTH
       ],
-      activeCostume.costume.images[
-        (imageIndex + 1) % activeCostume.costume.images.length
-      ].name,
-      (imageIndex + 1) % activeCostume.costume.images.length,
+      activeCostume.costume.images[(imageIndex + 1) % IMAGES_LENGTH].name,
+      (imageIndex + 1) % IMAGES_LENGTH,
     );
   };
 
@@ -685,7 +666,7 @@ async function loadCostumePreviewFromForm(loader, parts) {
   return new LoadedCostume(null, partMeshes);
 }
 
-async function previewFormModel() {
+async function previewModelFromForm() {
   parts = document.getElementById("parts").files;
 
   if (parts == null || parts.length == 0) return 0;
@@ -721,10 +702,10 @@ async function previewFormModel() {
 }
 
 function resetForm() {
-  let toReset = document.getElementsByClassName("form__image-name-input-grid");
+  let form = document.getElementsByClassName("form__image-name-input-grid");
 
-  for (let i = toReset.length - 1; i >= 0; i--) {
-    toReset[i].remove();
+  for (let i = form.length - 1; i >= 0; i--) {
+    form[i].remove();
   }
 
   COSTUME_UPLOAD_FORM.reset();
@@ -845,9 +826,7 @@ function adaptToScreenResolution(force = false) {
 
       if (!closeRight) {
         closeRight = createCloseButton("18px");
-        closeRight.onclick = () => {
-          closeRightMenu();
-        };
+        closeRight.onclick = closeRightMenu;
         rightMenuButtons.appendChild(closeRight);
       }
 
@@ -872,17 +851,15 @@ function adaptToScreenResolution(force = false) {
         leftMenuButton.style.opacity = 0;
       };
 
-      rightMenu.onmouseover = null;
-      rightMenu.onmouseout = null;
-      leftMenuDescriptionContainer.onmouseover = null;
-      leftMenuDescriptionContainer.onmouseout = null;
+      clearMouseover(rightMenu);
+      clearMouseover(leftMenuDescriptionContainer);
       document.getElementById(
         "left-menu__description-container",
       ).style.opacity = 1;
-      showElem(rightMenuButton);
-      showElem(leftMenuButton);
       hideElem(leftMenu);
       hideElem(rightMenu);
+      showElem(rightMenuButton);
+      showElem(leftMenuButton);
     }
   } else {
     if (prevResolutionIsSmall || force) {
@@ -914,7 +891,6 @@ function adaptToScreenResolution(force = false) {
         showHide("right-menu__button", "right-menu");
       };
       rightMenu.style.pointerEvents = "all";
-
       leftMenuDescriptionContainer.onmouseover = () => {
         showHide("left-menu__description-container", "left-menu__button");
       };
@@ -922,11 +898,11 @@ function adaptToScreenResolution(force = false) {
         showHide("left-menu__button", "left-menu__description-container");
       };
       leftMenuDescriptionContainer.style.opacity = 0;
+      rightMenu.style.pointerEvents = "all";
+      rightMenu.style.opacity = 0;
       showElem(leftMenuButton);
       showElem(rightMenuButton);
       showElem(leftMenu);
-      rightMenu.style.pointerEvents = "all";
-      rightMenu.style.opacity = 0;
     }
   }
 }
@@ -973,4 +949,9 @@ function closeElem(element) {
   } catch (error) {
     return -1;
   }
+}
+
+function clearMouseover(elem) {
+  elem.onmouseover = null;
+  elem.onmouseout = null;
 }
