@@ -1,5 +1,15 @@
 {
   "dependencies": {
     "three": "^0.184.0"
+  },
+  "engines": {
+    "npm": ">=11.12.1",
+    "node": ">=v24.15.0"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.5",
+    "eslint": "^10.9.1",
+    "eslint-config-eslint": "^14.0.0",
+    "eslint-config-prettier": "^10.1.8"
   }
 }

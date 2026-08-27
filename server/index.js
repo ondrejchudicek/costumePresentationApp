@@ -1,22 +1,16 @@
 import express from "express";
 import multer from "multer";
-import fs from "fs";
+import fs from "node:fs";
 import cors from "cors";
-import { randomUUID } from "crypto";
-import { json } from "stream/consumers";
-import path from "path";
+import { randomUUID } from "node:crypto";
+import path from "node:path";
 
 const app = express();
-const hostname = 'undefined';
 const PORT = process.env.PORT || 3000;
 const TOTAL_FILE_LIMIT = 150;
 
 app.use(cors());
 app.use(express.json());
-
-// use for Vite
-//app.use(express.static("../client"));
-// for build
 app.use(express.static(path.join(process.cwd(), "public")));
 
 // serve uploaded models
@@ -36,78 +30,80 @@ const storage = multer.diskStorage({
     }
   },
   filename: (req, file, cb) => {
-    const uniqueName = randomUUID() + "-" + file.originalname;
+    const uniqueName = `${randomUUID()}-${file.originalname}`;
     cb(null, uniqueName);
-  }
+  },
 });
 
-const upload = multer({ 
-  storage, 
+const upload = multer({
+  storage,
   limits: {
-    fileSize: TOTAL_FILE_LIMIT * 1024 * 1024
-  }
+    fileSize: TOTAL_FILE_LIMIT * 1024 * 1024,
+  },
 });
 
 // upload endpoint
-app.post("/api/uploadObject", upload.fields([
-  { name: "name"},
-  { name: "partFiles" },
-  { name: "images" }
-]), (req, res) => {
-  const allFiles = [
-    ...(req.files.partFiles || []),
-    ...(req.files.images || [])
-  ];
+app.post(
+  "/api/newObject",
+  upload.fields([{ name: "name" }, { name: "partFiles" }, { name: "images" }]),
+  (req, res) => {
+    const allFiles = [
+      ...(req.files.partFiles || []),
+      ...(req.files.images || []),
+    ];
 
-  const totalSize = allFiles.reduce((sum, file) => sum + file.size, 0);
+    const totalSize = allFiles.reduce((sum, file) => sum + file.size, 0);
 
-  if (totalSize > TOTAL_FILE_LIMIT * 1024 * 1024) {
-    allFiles.forEach(file => {
-      fs.unlink(file.path, () => {});
-    });
+    if (totalSize > TOTAL_FILE_LIMIT * 1024 * 1024) {
+      allFiles.forEach((file) => {
+        fs.unlink(file.path, () => {});
+      });
 
-    return res.status(400).json({ error: `Total file size exceeds ${TOTAL_FILE_LIMIT}MB` });
-  }
+      return res
+        .status(400)
+        .json({ error: `Total file size exceeds ${TOTAL_FILE_LIMIT}MB` });
+    }
 
-  const costumeID = randomUUID();
-  const partNames = Array.isArray(req.body.partNames)
-  ? req.body.partNames
-  : [req.body.partNames];
+    const costumeID = randomUUID();
+    const partNames = Array.isArray(req.body.partNames)
+      ? req.body.partNames
+      : [req.body.partNames];
 
-  const imageNames = Array.isArray(req.body.imageNames)
-  ? req.body.imageNames
-  : [req.body.imageNames];
+    const imageNames = Array.isArray(req.body.imageNames)
+      ? req.body.imageNames
+      : [req.body.imageNames];
 
-  const imageFiles = req.files.images || [];
+    const imageFiles = req.files.images || [];
 
-  const parts = req.files.partFiles.map((file, index) => ({
-    partID: "part_" + costumeID.toString() + "_" + index,
-    name: partNames[index],
-    path: `/models/${file.filename}`
-  }));
+    const parts = req.files.partFiles.map((file, index) => ({
+      partID: `part_${costumeID.toString()}_${index}`,
+      name: partNames[index],
+      path: `/models/${file.filename}`,
+    }));
 
-  const images = imageFiles.map((file, index) => ({
-    imageID: "image_" + costumeID.toString() + "_" + index,
-    name: imageNames[index],
-    path: `/images/${file.filename}`
-  }));
+    const images = imageFiles.map((file, index) => ({
+      imageID: `image_${costumeID.toString()}_${index}`,
+      name: imageNames[index],
+      path: `/images/${file.filename}`,
+    }));
 
-  const newObject = {
-    costumeID: costumeID,
-    name: req.body.name,
-    description: req.body.description,
-    parts,
-    images
-  };
+    const newObject = {
+      costumeID: costumeID,
+      name: req.body.name,
+      description: req.body.description,
+      parts,
+      images,
+    };
 
-  const data = JSON.parse(fs.readFileSync("costumes.json"));
+    const data = JSON.parse(fs.readFileSync("costumes.json"));
 
-  data.push(newObject);
+    data.push(newObject);
 
-  fs.writeFileSync("costumes.json", JSON.stringify(data, null, 2));
+    fs.writeFileSync("costumes.json", JSON.stringify(data, null, 2));
 
-  res.json(newObject);
-});
+    res.json(newObject);
+  },
+);
 
 // get all models
 app.get("/api/models", (req, res) => {
@@ -122,18 +118,13 @@ app.listen(PORT, "::", () => {
 // handle file size error
 app.use((err, req, res, next) => {
   if (err.code === "LIMIT_FILE_SIZE") {
-    return res.status(400).json({ error: `File size exceeds ${TOTAL_FILE_LIMIT}MB` });
+    return res
+      .status(400)
+      .json({ error: `File size exceeds ${TOTAL_FILE_LIMIT}MB` });
   }
   next(err);
 });
 
-app.all('/{*splat}', (req, res) => {
-    res.sendFile(
-        path.join(process.cwd(), "public/index.html")
-    );
+app.all("/{*splat}", (req, res) => {
+  res.sendFile(path.join(process.cwd(), "public/index.html"));
 });
-
-process.on('uncaughtException', err => {
-  console.error(`Uncaught error: ${err}`);
-  process.exit(1);
-})

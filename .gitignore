@@ -22,3 +22,5 @@ Thumbs.db
 
 /server/tutorial_images/
 /server/uploads/
+/server/public/
+review.md

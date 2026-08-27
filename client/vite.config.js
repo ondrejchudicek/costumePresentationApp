@@ -8,30 +8,30 @@ export default defineConfig({
 
     rollupOptions: {
       input: {
-        main: resolve(__dirname, "index.html"),
-        tutorial: resolve(__dirname, "tutorial.html")
-      }
-    }
+        main: resolve(import.meta.dirname, "index.html"),
+        tutorial: resolve(import.meta.dirname, "tutorial.html"),
+      },
+    },
   },
 
   server: {
     proxy: {
       "/api": {
         target: "http://localhost:3000",
-        changeOrigin: true
+        changeOrigin: true,
       },
       "/models": {
         target: "http://localhost:3000",
-        changeOrigin: true
+        changeOrigin: true,
       },
       "/images": {
         target: "http://localhost:3000",
-        changeOrigin: true
+        changeOrigin: true,
       },
       "/tutorial_images": {
         target: "http://localhost:3000",
-        changeOrigin: true
-      }
-    }
-  }
+        changeOrigin: true,
+      },
+    },
+  },
 });

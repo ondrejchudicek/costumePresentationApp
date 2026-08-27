@@ -1,13 +1,11 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { EXRLoader } from "three/examples/jsm/loaders/EXRLoader.js";
-import { TextureLoader } from "three";
 
 const BASE_URL = "";
 const Y_OFFSET = -1;
 const TOTAL_FILE_LIMIT = 150;
-const COSTUMES = await (await fetch(BASE_URL + "/api/models")).json(); // array of Costume
+const COSTUMES = await (await fetch(`${BASE_URL}/api/models`)).json(); // array of Costume
 const IS_TOUCH = window.matchMedia("(pointer: coarse)").matches;
 const MAX_LOADED = IS_TOUCH ? 1 : 3;
 const canvas = document.getElementById("model-canvas");
@@ -23,16 +21,15 @@ const CAMERA = new THREE.PerspectiveCamera(65, width / height, 0.01, 100);
 const SCENE = new THREE.Scene();
 const GLTF_LOADER = new GLTFLoader();
 const COSTUME_UPLOAD_FORM = document.forms.costumeUploadForm;
-let loadedCostumes = new Array(); // [{costume, partMeshes[]}]
-let activeParts = new Array();
+const loadedCostumes = []; // [{costume, partMeshes[]}]
+let activeParts = [];
 let activeCostume; // LoadedCostume
 let rightMenuSelected = 0;
-
 let closeLeft, closeRight;
 let closeRightMenuOnContribute = false;
 let prevResolutionIsSmall = false;
 
-setupRenderer();
+/*setupRenderer();
 setupAboutButtons();
 setupCamera();
 // need to setup camera before defining controls
@@ -46,12 +43,7 @@ resetForm();
 window.onresize = () => {
   adaptToScreenResolution();
 };
-animate();
-
-// place first costume
-if (COSTUMES.length > 0) {
-  await replaceRenderedCostume(GLTF_LOADER, COSTUMES[0]);
-}
+animate();*/
 
 function Costume(costumeID, name, description, parts, images) {
   this.costumeID = costumeID;
@@ -76,7 +68,7 @@ function Image(name, path) {
   this.path = path;
 }
 
-function animate(t = 0) {
+function animate() {
   requestAnimationFrame(animate);
   RENDERER.render(SCENE, CAMERA);
   CONTROLS.update();
@@ -142,7 +134,7 @@ async function setupImageBG() {
 }
 
 function setupRightMenuTopButtons() {
-  let rightMenuList = document.getElementById("right-menu__top__content");
+  const rightMenuList = document.getElementById("right-menu__top__content");
 
   document.getElementById("images-button").onclick = () => {
     displayImagesInRightMenu(rightMenuList, activeCostume.costume);
@@ -179,7 +171,7 @@ function setupForm() {
 }
 
 function setupFormClose() {
-  let closeButton = createCloseButton("20px");
+  const closeButton = createCloseButton("20px");
   closeButton.onclick = () => {
     hideElem(COSTUME_UPLOAD_FORM);
   };
@@ -205,21 +197,19 @@ function setupAboutButtons() {
 //------------------------------------------------------ /Setups
 
 function adaptToScreenResolution(force = false) {
-  let leftMenu = document.getElementById("left-menu");
-  let leftMenuButton = document.getElementById("left-menu__button");
-  let rightMenu = document.getElementById("right-menu");
-  let rightMenuButton = document.getElementById("right-menu__button");
-  let form = document.getElementById("costume-form");
-  let rightMenuButtons = document.getElementsByClassName(
+  const leftMenu = document.getElementById("left-menu");
+  const leftMenuButton = document.getElementById("left-menu__button");
+  const rightMenu = document.getElementById("right-menu");
+  const rightMenuButton = document.getElementById("right-menu__button");
+  const rightMenuButtons = document.getElementsByClassName(
     "right-menu__top__buttons-container",
   )[0];
-  let leftMenuDescriptionContainer = document.getElementById(
+  const leftMenuDescriptionContainer = document.getElementById(
     "left-menu__description-container",
   );
 
   if (IS_TOUCH || window.innerWidth < 1080) {
     if (!prevResolutionIsSmall) {
-      console.log("changing to small");
       prevResolutionIsSmall = true;
 
       if (!closeLeft) {
@@ -272,7 +262,6 @@ function adaptToScreenResolution(force = false) {
     }
   } else {
     if (prevResolutionIsSmall || force) {
-      console.log("changing to large");
       prevResolutionIsSmall = false;
 
       if (closeLeft) {
@@ -319,22 +308,20 @@ function adaptToScreenResolution(force = false) {
 //------------------------------------------------------ Replace costume
 
 async function replaceRenderedCostume(loader, costume) {
-  console.log("Replacing to " + costume.costumeID);
-
-  let newCostumeID = costume.costumeID;
+  const newCostumeID = costume.costumeID;
 
   if (
     activeCostume &&
-    (!activeCostume.costume || newCostumeID != activeCostume.costume.costumeID)
+    (!activeCostume.costume || newCostumeID !== activeCostume.costume.costumeID)
   ) {
     removeCostumeFromScene(activeCostume, activeParts);
   }
 
   if (
-    loadedCostumes.length == 0 ||
+    loadedCostumes.length === 0 ||
     !activeCostume ||
     !activeCostume.costume ||
-    newCostumeID != activeCostume.costume.costumeID
+    newCostumeID !== activeCostume.costume.costumeID
   ) {
     let costumeToPlace;
 
@@ -343,10 +330,8 @@ async function replaceRenderedCostume(loader, costume) {
         (e) => e.costume && e.costume.costumeID === newCostumeID,
       )
     ) {
-      console.log("Costume " + newCostumeID + " not loaded, trying to load.");
-
-      let loadingIcon = displayLoadingIcon();
-      let loadedCostume = await loadCostumeFromDB(loader, costume);
+      const loadingIcon = displayLoadingIcon();
+      const loadedCostume = await loadCostumeFromDB(loader, costume);
       loadingIcon.remove();
 
       if (loadedCostumes.length >= MAX_LOADED) {
@@ -355,7 +340,6 @@ async function replaceRenderedCostume(loader, costume) {
 
       loadedCostumes.push(loadedCostume);
       costumeToPlace = loadedCostume;
-      console.log("Costume " + newCostumeID + " successfully loaded");
     } else {
       costumeToPlace = loadedCostumes.find(
         (e) => e.costume.costumeID === newCostumeID,
@@ -370,7 +354,7 @@ async function replaceRenderedCostume(loader, costume) {
 }
 
 async function loadCostumeFromDB(loader, costume) {
-  let partMeshes = new Array();
+  const partMeshes = [];
   let part;
 
   for (let i = 0; i < costume.parts.length; i++) {
@@ -384,7 +368,6 @@ async function loadCostumeFromDB(loader, costume) {
     });
 
     partMeshes.push(part);
-    console.log("loaded " + costume.parts[i].name);
   }
 
   return new LoadedCostume(costume, partMeshes);
@@ -401,15 +384,15 @@ function setCostumeNameAndDescription(name, description) {
 }
 
 function updateRightMenu(costume) {
-  let rightMenuList = document.getElementById("right-menu__top__content");
-  if (rightMenuSelected == 0) {
+  const rightMenuList = document.getElementById("right-menu__top__content");
+  if (rightMenuSelected === 0) {
     displayImagesInRightMenu(rightMenuList, costume);
-  } else if (rightMenuSelected == 1) {
+  } else if (rightMenuSelected === 1) {
     displayPartToggles(rightMenuList, costume);
   }
 }
 
-function displayImagesInRightMenu(rightMenuList, activeCostume) {
+function displayImagesInRightMenu(rightMenuList, costume) {
   rightMenuSelected = 0;
   document.getElementById("images-button").className =
     "main-font right-menu-sections-font green";
@@ -419,11 +402,11 @@ function displayImagesInRightMenu(rightMenuList, activeCostume) {
     "main-font right-menu-sections-font";
   rightMenuList.innerHTML = "";
 
-  for (let i = 0; i < activeCostume.images.length; i++) {
-    let img = loadImageFromDB(
-      BASE_URL + activeCostume.images[i].path,
+  for (let i = 0; i < costume.images.length; i++) {
+    const img = loadImageFromDB(
+      BASE_URL + costume.images[i].path,
       "Image Missing",
-      activeCostume.images[i].name,
+      costume.images[i].name,
       i,
     );
 
@@ -432,7 +415,18 @@ function displayImagesInRightMenu(rightMenuList, activeCostume) {
 }
 
 function loadImageFromDB(src, alt, imageName, imageIndex) {
-  let img = document.createElement("img");
+  const img = document.createElement("img");
+  img.src = src;
+  img.alt = alt;
+  img.onclick = () => {
+    showFullscreenImage(img, imageName, imageIndex);
+  };
+
+  return img;
+}
+
+async function newLoadImageFromDB(src, alt, imageName, imageIndex) {
+  const img = document.createElement("img");
   img.src = src;
   img.alt = alt;
   img.onclick = () => {
@@ -479,58 +473,57 @@ function showFullscreenImage(img, imageName, imageIndex) {
 }
 
 function createFullImageContainer(img) {
-  let fullImageContainer = document.createElement("div");
+  const fullImageContainer = document.createElement("div");
   fullImageContainer.id = "full-image-container";
   document.getElementById("screen").appendChild(fullImageContainer);
 
-  let closeButton = createCloseButton("25px");
+  const closeButton = createCloseButton("25px");
   closeButton.className = "close-button full-image-container__close-button";
   fullImageContainer.appendChild(closeButton);
   closeButton.onclick = () => {
     closeElem(fullImageContainer);
   };
 
-  let next = document.createElement("img");
+  const next = document.createElement("img");
   next.className = "full-image-container__button";
   next.src = "./icons/next.svg";
   next.id = "full-image-container__next";
   fullImageContainer.appendChild(next);
 
-  let prev = document.createElement("img");
+  const prev = document.createElement("img");
   prev.className = "full-image-container__button";
   prev.src = "./icons/prev.svg";
   prev.id = "full-image-container__prev";
   fullImageContainer.appendChild(prev);
 
-  let name = document.createElement("div");
+  const name = document.createElement("div");
   name.id = "full-image-container__name";
   name.className = "title-font";
   fullImageContainer.appendChild(name);
 
-  let fullImage = img.cloneNode(true);
+  const fullImage = img.cloneNode(true);
   fullImage.id = "full-image-container__image";
   fullImageContainer.appendChild(fullImage);
 
   return {
-    next: next,
-    prev: prev,
-    name: name,
+    next,
+    prev,
+    name,
   };
 }
 
 function modifyFullImageContainer(imageIndex) {
-  let fullImageContainer = document.getElementById("full-image-container");
-  let next = document.getElementById("full-image-container__next");
-  let prev = document.getElementById("full-image-container__prev");
-  let name = document.getElementById("full-image-container__name");
-  let fullImage = document.getElementById("full-image-container__image");
+  const next = document.getElementById("full-image-container__next");
+  const prev = document.getElementById("full-image-container__prev");
+  const name = document.getElementById("full-image-container__name");
+  const fullImage = document.getElementById("full-image-container__image");
 
   fullImage.src = activeCostume.costume.images[imageIndex].path;
 
   return {
-    next: next,
-    prev: prev,
-    name: name,
+    next,
+    prev,
+    name,
   };
 }
 
@@ -539,19 +532,19 @@ function modifyFullImageContainer(imageIndex) {
 //------------------------------------------------------ Form functionality
 
 async function previewModelFromForm() {
-  parts = document.getElementById("parts").files;
+  const parts = document.getElementById("parts").files;
 
-  if (parts == null || parts.length == 0) return 0;
+  if (parts === null || parts.length === 0) return 0;
 
   hideElem(COSTUME_UPLOAD_FORM);
 
-  let loading = displayLoadingIcon();
+  const loading = displayLoadingIcon();
 
   if (activeCostume) {
     removeCostumeFromScene(activeCostume, activeParts);
   }
 
-  let loadedCostume = await loadCostumePreviewFromForm(GLTF_LOADER, parts);
+  const loadedCostume = await loadCostumePreviewFromForm(GLTF_LOADER, parts);
 
   if (loadedCostumes.length >= MAX_LOADED) {
     disposeOldestCostumeFromMemory(loadedCostumes);
@@ -563,7 +556,7 @@ async function previewModelFromForm() {
 
   activeParts = new Array(loadedCostume.partMeshes.length).fill(true);
 
-  if (rightMenuSelected == 1) {
+  if (rightMenuSelected === 1) {
     displayPartToggles(
       document.getElementById("right-menu__top__content"),
       null,
@@ -571,13 +564,14 @@ async function previewModelFromForm() {
   }
 
   loading.remove();
+  return 1;
 }
 
 async function loadCostumePreviewFromForm(loader, parts) {
-  let partMeshes = new Array();
+  const partMeshes = [];
 
   for (let i = 0; i < parts.length; i++) {
-    let part = await loader.loadAsync(URL.createObjectURL(parts[i]));
+    const part = await loader.loadAsync(URL.createObjectURL(parts[i]));
 
     // turn on backfaces
     part.scene.traverse((child) => {
@@ -588,19 +582,20 @@ async function loadCostumePreviewFromForm(loader, parts) {
 
     partMeshes.push(part);
   }
+
   return new LoadedCostume(null, partMeshes);
 }
 
 async function submitForm(form) {
   form.preventDefault();
   hideElem(COSTUME_UPLOAD_FORM);
-  let loadingIcon = displayLoadingIcon();
-  let successContainer = document.createElement("div");
+  const loadingIcon = displayLoadingIcon();
+  const successContainer = document.createElement("div");
   successContainer.className = "success-container";
-  let success = document.createElement("div");
+  const success = document.createElement("div");
   success.className = "main-font large-font success";
   successContainer.appendChild(success);
-  let fileSize = checkSubmitSize(form);
+  const fileSize = checkSubmitSize(form);
 
   if (fileSize > TOTAL_FILE_LIMIT) {
     loadingIcon.remove();
@@ -608,53 +603,53 @@ async function submitForm(form) {
     success.style.color = "#ff2a00";
     document.getElementById("screen").appendChild(successContainer);
 
-    setTimeout(function () {
+    setTimeout(() => {
       successContainer.remove();
     }, 4000);
 
     return -1;
-  } else {
-    const FORM_DATA = new FormData(form.target);
-
-    const RES = await fetch(BASE_URL + "/api/uploadObject", {
-      method: "POST",
-      body: FORM_DATA,
-    });
-
-    const DATA = await RES.json();
-    loadingIcon.remove();
-
-    // multer error
-    if (!RES.ok) {
-      console.error(DATA.error);
-      success.textContent = `Dosažen limit souborů (${TOTAL_FILE_LIMIT}MB)`;
-      success.style.color = "#ff2a00";
-      document.getElementById("screen").appendChild(successContainer);
-
-      setTimeout(function () {
-        successContainer.remove();
-      }, 4000);
-
-      return -1;
-    }
-
-    // success
-    if (typeof DATA !== "undefined") {
-      success.textContent = "Úspěšně nahráno";
-      success.style.color = "#1aff00";
-      document.getElementById("screen").appendChild(successContainer);
-
-      setTimeout(function () {
-        successContainer.remove();
-        resetForm();
-      }, 2000);
-    }
   }
+
+  const FORM_DATA = new FormData(form.target);
+  const RES = await fetch(`${BASE_URL}/api/newObject`, {
+    method: "POST",
+    body: FORM_DATA,
+  });
+
+  const DATA = await RES.json();
+  loadingIcon.remove();
+
+  // multer error
+  if (!RES.ok) {
+    success.textContent = `Dosažen limit souborů (${TOTAL_FILE_LIMIT}MB)`;
+    success.style.color = "#ff2a00";
+    document.getElementById("screen").appendChild(successContainer);
+
+    setTimeout(() => {
+      successContainer.remove();
+    }, 4000);
+
+    return -1;
+  }
+
+  // success
+  if (typeof DATA !== "undefined") {
+    success.textContent = "Úspěšně nahráno";
+    success.style.color = "#1aff00";
+    document.getElementById("screen").appendChild(successContainer);
+
+    setTimeout(() => {
+      successContainer.remove();
+      resetForm();
+    }, 2000);
+  }
+
+  return 1;
 }
 
 function checkSubmitSize(form) {
-  const PART_FILES = form.target.elements["partFiles"].files;
-  const IMAGES = form.target.elements["images"].files;
+  const PART_FILES = form.target.elements.partFiles.files;
+  const IMAGES = form.target.elements.images.files;
   let fileSize = 0;
 
   for (let i = 0; i < PART_FILES.length; i++) {
@@ -668,7 +663,7 @@ function checkSubmitSize(form) {
 }
 
 function resetForm() {
-  let form = document.getElementsByClassName("form__image-name-input-grid");
+  const form = document.getElementsByClassName("form__image-name-input-grid");
 
   for (let i = form.length - 1; i >= 0; i--) {
     form[i].remove();
@@ -679,15 +674,15 @@ function resetForm() {
 
 // generate a grid of image+input field pair in the form for filling image names
 function generateImageNameInputGrid(evt) {
-  let images = evt.target.files;
+  const images = evt.target.files;
 
-  let imageNameInputGrid = document.createElement("div");
+  const imageNameInputGrid = document.createElement("div");
   imageNameInputGrid.className = "form__image-name-input-grid";
 
   for (let i = 0; i < images.length; i++) {
-    let imageName = document.createElement("input");
+    const imageName = document.createElement("input");
     imageName.type = "text";
-    imageName.id = "imageNames" + i;
+    imageName.id = `imageNames${i}`;
     imageName.name = "imageNames";
     imageName.className =
       "input-text-field input-text-field--small main-font small-font";
@@ -695,11 +690,11 @@ function generateImageNameInputGrid(evt) {
     imageName.autocomplete = false;
     imageName.placeholder = "Název Obrázku";
 
-    let imgPreview = document.createElement("img");
+    const imgPreview = document.createElement("img");
     imgPreview.src = URL.createObjectURL(images[i]);
     imgPreview.alt = "Image Missing";
 
-    let imageCard = document.createElement("div");
+    const imageCard = document.createElement("div");
     imageCard.className = "form__image-card";
 
     imageCard.appendChild(imgPreview);
@@ -713,21 +708,21 @@ function generateImageNameInputGrid(evt) {
 
 // generate a grid of input field pair in the form for filling model names
 function generateModelNameInputGrid(evt) {
-  let parts = evt.target.files;
+  const parts = evt.target.files;
 
-  let imageNameInputGrid = document.createElement("div");
+  const imageNameInputGrid = document.createElement("div");
   imageNameInputGrid.className = "form__image-name-input-grid";
 
   for (let i = 0; i < parts.length; i++) {
-    let partName = document.createElement("input");
+    const partName = document.createElement("input");
     partName.type = "text";
-    partName.id = "partNames" + i;
+    partName.id = `partNames${i}`;
     partName.name = "partNames";
     partName.className =
       "input-text-field input-text-field--small main-font small-font";
     partName.required = true;
     partName.autocomplete = false;
-    partName.placeholder = "Název modelu " + parts[i].name;
+    partName.placeholder = `Název modelu ${parts[i].name}`;
 
     imageNameInputGrid.appendChild(partName);
   }
@@ -739,17 +734,10 @@ function generateModelNameInputGrid(evt) {
 
 //------------------------------------------------------ Shared replace functions
 
-function removeCostumeFromScene(loadedCostumeToRemove, activeParts) {
-  if (activeParts.length != loadedCostumeToRemove.partMeshes.length) {
-    console.log(
-      "activeParts is different length than partMeshes " +
-        activeParts.length +
-        "," +
-        loadedCostumeToRemove.partMeshes.length,
-    );
-  } else {
-    for (let j = 0; j < activeParts.length; j++) {
-      if (activeParts[j]) {
+function removeCostumeFromScene(loadedCostumeToRemove, parts) {
+  if (parts.length === loadedCostumeToRemove.partMeshes.length) {
+    for (let j = 0; j < parts.length; j++) {
+      if (parts[j]) {
         SCENE.remove(loadedCostumeToRemove.partMeshes[j].scene);
       }
     }
@@ -767,7 +755,7 @@ function placeMeshToScene(mesh) {
   SCENE.add(mesh.scene);
 }
 
-function displayPartToggles(togglesContainer, activeCostume) {
+function displayPartToggles(togglesContainer, costume) {
   rightMenuSelected = 1;
   document.getElementById("images-button").className =
     "main-font right-menu-sections-font";
@@ -777,19 +765,19 @@ function displayPartToggles(togglesContainer, activeCostume) {
     "main-font right-menu-sections-font";
   togglesContainer.innerHTML = "";
 
-  if (!activeCostume) {
+  if (!costume) {
     for (let i = 0; i < activeParts.length; i++) {
       placePartToggle(i, togglesContainer);
     }
   } else {
     for (let i = 0; i < activeParts.length; i++) {
-      placePartToggle(i, togglesContainer, activeCostume);
+      placePartToggle(i, togglesContainer, costume);
     }
   }
 }
 
 function placePartToggle(index, toggleButtonsContainer, parentCostume = null) {
-  let toggle = document.createElement("button");
+  const toggle = document.createElement("button");
 
   if (activeParts[index]) {
     toggle.className = "part-toggle-button main-font green";
@@ -809,7 +797,6 @@ function placePartToggle(index, toggleButtonsContainer, parentCostume = null) {
 
 function toggleCostumePart(partIndex, button) {
   if (partIndex >= activeParts.length) {
-    console.log("partIndex out of range");
     return -1;
   }
 
@@ -821,11 +808,13 @@ function toggleCostumePart(partIndex, button) {
     button.className = "part-toggle-button main-font green";
   }
   activeParts[partIndex] = !activeParts[partIndex];
+
+  return 1;
 }
 
-function disposeOldestCostumeFromMemory(loadedCostumes) {
-  for (let i = 0; i < loadedCostumes[0].partMeshes.length; i++) {
-    let gltf = loadedCostumes[0].partMeshes[i];
+function disposeOldestCostumeFromMemory(costumes) {
+  for (let i = 0; i < costumes[0].partMeshes.length; i++) {
+    const gltf = costumes[0].partMeshes[i];
     gltf.scene.traverse((obj) => {
       if (obj.isMesh) {
         obj.geometry.dispose();
@@ -839,7 +828,7 @@ function disposeOldestCostumeFromMemory(loadedCostumes) {
     });
   }
 
-  loadedCostumes.shift();
+  costumes.shift();
 }
 
 //------------------------------------------------------ /Shared replace functions
@@ -858,11 +847,11 @@ function displayModelSelectButtons(costumesContainer, loader) {
 
   for (let i = 0; i < COSTUMES.length; i++) {
     if (COSTUMES[i].images.length > 0) {
-      let modelSelectCard = document.createElement("div");
+      const modelSelectCard = document.createElement("div");
       modelSelectCard.className = "model-select-card";
       costumesContainer.appendChild(modelSelectCard);
 
-      let img = document.createElement("img");
+      const img = document.createElement("img");
       img.src = BASE_URL + COSTUMES[i].images[0].path;
       img.alt = "Image Missing";
 
@@ -878,7 +867,7 @@ function displayModelSelectButtons(costumesContainer, loader) {
 }
 
 function placeModelSelectButton(costume, modelSelectorContainer, loader) {
-  let select = document.createElement("button");
+  const select = document.createElement("button");
   select.className = "main-font medium-font";
   select.textContent = costume.name;
   select.costume = costume;
@@ -891,7 +880,7 @@ function placeModelSelectButton(costume, modelSelectorContainer, loader) {
 }
 
 function placeModelSelectButtonWithImage(costume, modelSelectCard) {
-  let select = document.createElement("button");
+  const select = document.createElement("button");
   select.className = "main-font medium-font";
   select.textContent = costume.name;
 
@@ -899,7 +888,7 @@ function placeModelSelectButtonWithImage(costume, modelSelectCard) {
 }
 
 function closeRightMenu() {
-  let rightMenu = document.getElementById("right-menu");
+  const rightMenu = document.getElementById("right-menu");
   showHide("right-menu__button", "right-menu");
   rightMenu.style.zIndex = 10;
   document.getElementById("left-menu__button").style.opacity = 1;
@@ -907,10 +896,10 @@ function closeRightMenu() {
 }
 
 function displayLoadingIcon() {
-  let loading = document.createElement("div");
+  const loading = document.createElement("div");
   loading.className = "loading";
 
-  let loadingAnim = document.createElement("div");
+  const loadingAnim = document.createElement("div");
   loadingAnim.className = "loading-anim";
 
   loading.appendChild(loadingAnim);
@@ -920,7 +909,7 @@ function displayLoadingIcon() {
 }
 
 function createCloseButton(size) {
-  let cross = document.createElement("img");
+  const cross = document.createElement("img");
   cross.src = "/icons/cross.svg";
   cross.alt = "Close";
   cross.style.width = size;
@@ -947,6 +936,7 @@ function hideElem(element) {
   } catch (error) {
     return -1;
   }
+  return 1;
 }
 
 function showElem(element) {
@@ -956,6 +946,7 @@ function showElem(element) {
   } catch (error) {
     return -1;
   }
+  return 1;
 }
 
 function showHide(show, hide) {
@@ -969,9 +960,31 @@ function closeElem(element) {
   } catch (error) {
     return -1;
   }
+  return 1;
 }
 
 function clearMouseover(elem) {
   elem.onmouseover = null;
   elem.onmouseout = null;
+}
+
+//------------------------------------------------------ Run
+
+setupRenderer();
+setupAboutButtons();
+setupCamera();
+// need to setup camera before defining controls
+const CONTROLS = new OrbitControls(CAMERA, RENDERER.domElement);
+setupControls();
+setupFlatColorBG();
+setupRightMenuTopButtons();
+adaptToScreenResolution(true);
+setupForm();
+resetForm();
+window.onresize = () => {
+  adaptToScreenResolution();
+};
+animate();
+if (COSTUMES.length > 0) {
+  await replaceRenderedCostume(GLTF_LOADER, COSTUMES[0]);
 }
